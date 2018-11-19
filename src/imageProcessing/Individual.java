@@ -23,16 +23,23 @@ import javafx.stage.Stage;
 public class Individual{
     private List<ConvexPolygon> genome;
     private int geneNumber;
+    private double fitness;
+    
+    public Individual(ArrayList<ConvexPolygon> genome,Color[][] target) {
+    	this.genome = new ArrayList<ConvexPolygon>(genome);
+    	setFitness(target);
+    }
 
-    public Individual(int n){
-    	int max = 2147483647;
+    public Individual(int n,Color[][] target){
+    	int maxEdges = 3;
         genome=new ArrayList<ConvexPolygon>();
         this.geneNumber = n;
         Random r = new Random();
-        int random = r.nextInt(max + 1);
+        int random = r.nextInt(maxEdges);
         for(int i=0; i<n; i++) {
-        	genome.add(new ConvexPolygon(random));
+        	genome.add(new ConvexPolygon(maxEdges	));
         }
+        setFitness(target);
     }
     
     public List<ConvexPolygon> getGenome() {
@@ -42,8 +49,12 @@ public class Individual{
     public void setGenome(List<ConvexPolygon> genome) {
     	this.genome = new ArrayList<ConvexPolygon>(genome);
     }
-
-    public double getFitness(Color[][] target){
+   
+    public double getFitness() {
+    	return this.fitness;
+    }
+    
+    public void setFitness(Color[][] target){
 		Group image = new Group();
 		for(ConvexPolygon p : this.genome){
 		    image.getChildren().add(p);
@@ -64,6 +75,6 @@ public class Individual{
 			    + Math.pow(c.getGreen()-target[i][j].getGreen(),2);
 		    }
 		}	
-		return res;
+		this.fitness = res;
     }
 }

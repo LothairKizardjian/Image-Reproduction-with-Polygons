@@ -53,48 +53,38 @@ public class Test extends Application{
         }
 		System.out.println("Read target image " + targetImage + " " + maxX + "x" + maxY);
 		
-		// génération de 10 triangles
-		List<ConvexPolygon> ls = new ArrayList<ConvexPolygon>();
-		for (int i=0;i<200;i++)
-			ls.add(new ConvexPolygon(3));
+		// Création d'une population
+		Population pop = new Population(target);
 		
-		// formation de l'image par superposition des polygones
-		Group image = new Group();
-		for (ConvexPolygon p : ls)
-			image.getChildren().add(p);
-		
-		// Calcul de la couleur de chaque pixel.Pour cela, on passe par une instance de 
-		// WritableImage, qui possède une méthode pour obtenir un PixelReader.
-		WritableImage wimg = new WritableImage(maxX,maxY);
-		image.snapshot(null,wimg);
-		PixelReader pr = wimg.getPixelReader();
-		// On utilise le PixelReader pour lire chaque couleur
-		// ici, on calcule la somme de la distance euclidienne entre le vecteur (R,G,B)
-		// de la couleur du pixel cible et celui du pixel de l'image générée	
-		double res=0;
-		for (int i=0;i<maxX;i++){
-			for (int j=0;j<maxY;j++){
-				Color c = pr.getColor(i, j);
-				res += Math.pow(c.getBlue()-target[i][j].getBlue(),2)
-				+Math.pow(c.getRed()-target[i][j].getRed(),2)
-				+Math.pow(c.getGreen()-target[i][j].getGreen(),2);
+		ArrayList<Group> g = new ArrayList<Group>();
+		ArrayList<RenderedImage> images = new ArrayList<RenderedImage>();
+
+		for(Individual i : pop.getPopulation()) {
+			Group gr = new Group();
+			for(ConvexPolygon cp : i.getGenome()) {
+				gr.getChildren().add(cp);
+			}
+			images.add(SwingFXUtils.fromFXImage(new WritableImage(maxX,maxY),null));
+			System.out.println(Math.sqrt(i.getFitness()));
+		}
+
+		int cpt = 0;
+		for(RenderedImage rdImage : images) {
+			try {
+				ImageIO.write(rdImage, "png", new File("test"+cpt+".png"));
+				System.out.println("wrote image in " + "test"+cpt+".png");
+				cpt++;
+			} catch (IOException e1) {
+				e1.printStackTrace();
 			}
 		}
-		System.out.println(Math.sqrt(res));
-		
-		// Stockage de l'image dans un fichier .png
-		RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
-		try {
-			ImageIO.write(renderedImage, "png", new File("test.png"));
-			System.out.println("wrote image in " + "test.png");
-		} catch (IOException e1) {
-			e1.printStackTrace();
+			
+		for(Group gr : g) {
+			// affichage de l'image dans l'interface graphique
+			Scene scene = new Scene(gr,maxX, maxY);
+			myStage.setScene(scene);
+			myStage.show();
 		}
-		
-		// affichage de l'image dans l'interface graphique
-		Scene scene = new Scene(image,maxX, maxY);
-		myStage.setScene(scene);
-		myStage.show();
 		
 	}
 
