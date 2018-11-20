@@ -17,12 +17,15 @@ public class ConvexPolygon extends Polygon {
 		static final int maxNumPoints=3;
 		static Random gen = new Random();
 		static int max_X,max_Y;
+		static int verteces;
+		static int maxEdges = 17;
 		NumberFormat nf = new DecimalFormat("##.00");
 		
 		
 		// randomly generates a polygon
 		public ConvexPolygon(int numPoints){
 			super();
+			verteces = numPoints;
 			genRandomConvexPolygone(numPoints);
 			int r = gen.nextInt(256);
 			int g = gen.nextInt(256);

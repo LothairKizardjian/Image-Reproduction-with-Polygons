@@ -1,28 +1,17 @@
 package imageProcessing;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import javax.imageio.ImageIO;
-
-import javafx.application.Application;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Group;
-import javafx.scene.Scene;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 
 
 public class Individual{
     private List<ConvexPolygon> genome;
-    private int geneNumber;
     private double fitness;
     
     public Individual(ArrayList<ConvexPolygon> genome,Color[][] target) {
@@ -31,13 +20,12 @@ public class Individual{
     }
 
     public Individual(int n,Color[][] target){
-    	int maxEdges = 3;
+        
         genome=new ArrayList<ConvexPolygon>();
-        this.geneNumber = n;
         Random r = new Random();
-        int random = r.nextInt(maxEdges);
+        int random = 3 + r.nextInt(ConvexPolygon.maxEdges);
         for(int i=0; i<n; i++) {
-        	genome.add(new ConvexPolygon(maxEdges	));
+        	genome.add(new ConvexPolygon(random));
         }
         setFitness(target);
     }
@@ -76,5 +64,51 @@ public class Individual{
 		    }
 		}	
 		this.fitness = res;
+    }
+    
+
+    
+    public void mutation() {
+    	Random rand = new Random();
+        int random = 1+rand.nextInt(100);
+        int random2= 1+rand.nextInt(genome.size());
+        
+        //On choisi au hasard le gene (ici un polygone) qui subira une mutation
+        ConvexPolygon chosen = genome.get(random2);
+        
+        //On effectue ensuite une mutation qui a 1 chance sur 3 d'avoir des effets différents        
+        if(random <= 33) {
+            // mutation sur la couleur d'un polygone : on lui en attribue une nouvelle au hasard
+    		Random gen = new Random();
+			int r = gen.nextInt(256);
+			int g = gen.nextInt(256);
+			int b = gen.nextInt(256); 
+			chosen.setFill(Color.rgb(r, g, b));
+        }else if(33 < random && random <= 66){
+        	// mutation sur ajout ou retrait d'un sommet d'un polygone mais sa couleur reste identique
+        	// mais la forme peut radicalement être modifiée
+        	int random3 = rand.nextInt(2);
+        	if(random3 == 1) {
+        		//ajout d'un sommet 
+        		chosen.genRandomConvexPolygone(chosen.verteces+1);
+        	}else {
+        		//retrait d'un sommet
+        		chosen.genRandomConvexPolygone(chosen.verteces-1);
+        	}        	
+        }else {
+        	// mutation sur la suppression ou l'ajout d'un polygone (ssi il n'en a pas déjà 50)
+        	int random4 = rand.nextInt(2);   
+        	if(random4 == 1) {
+        		//retrait du polygone
+        		genome.remove(chosen);
+        	}else {
+        		//ajout d'un nouvea polygone aléatoire si genome.size() < 50, sinon rien ne se passe
+        		if(genome.size()<50) {
+        			int random5 = 3 + rand.nextInt(ConvexPolygon.maxEdges);
+        			genome.add(new ConvexPolygon(random5));
+        		}
+        	}
+        	
+        }
     }
 }
