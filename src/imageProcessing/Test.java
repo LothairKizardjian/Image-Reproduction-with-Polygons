@@ -56,40 +56,30 @@ public class Test extends Application{
 		// Création d'une population
 		Population pop = new Population(target);
 		
-		ArrayList<Group> g = new ArrayList<Group>();
-		ArrayList<RenderedImage> images = new ArrayList<RenderedImage>();
+		int maxGenerationNumber = 10000;
+		double acceptableFitnessThreshold = 1000;
+		GeneticAlgorithm GA = new GeneticAlgorithm(pop,maxGenerationNumber,acceptableFitnessThreshold);
 		
-		Group bestImage = new Group();
-
-		for(Individual i : pop.getPopulation()) {
-			System.out.println("Polygon number : "+i.getGenome().size());
-			Group gr = new Group();
-			WritableImage wimg = new WritableImage(maxX,maxY);
-			for(ConvexPolygon cp : i.getGenome()) {
-				gr.getChildren().add(cp);
-			}
-			gr.snapshot(null,wimg);
-			g.add(gr);
-			if(pop.getBestIndividual() == i) {
-				bestImage = gr;
-			}
-			RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
-			images.add(renderedImage);
+		Individual bestIndividual = GA.selection();		
+		
+		Group image = new Group();
+		WritableImage wimg = new WritableImage(maxX,maxY);
+		for(ConvexPolygon cp : bestIndividual.getGenome()) {
+			image.getChildren().add(cp);
 		}
-
-		int cpt = 0;
-		for(RenderedImage rdImage : images) {
-			try {
-				ImageIO.write(rdImage, "png", new File("generatedImages/test"+cpt+".png"));
-				cpt++;
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
+		image.snapshot(null,wimg);
+		RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
+		
+		try {
+			ImageIO.write(renderedImage, "png", new File("generatedImages/finalResult.png"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 		
-		System.out.println("Best fitness : "+pop.getBestIndividual().getFitness());
-		//affichage de l'image dans l'interface graphique
-		Scene scene = new Scene(bestImage,maxX, maxY);
+		/*
+		 * affichage de l'image dans l'interface graphique
+		 */
+		Scene scene = new Scene(image,maxX, maxY);
 		myStage.setScene(scene);
 		myStage.show();
 		

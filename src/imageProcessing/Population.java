@@ -10,72 +10,51 @@ import javafx.scene.paint.Color;
 public class Population{
     private ArrayList<Individual> population;
     private Color[][] target;
-    private Individual bestIndividual;
+    
+    public Population() {
+    	this.population = new ArrayList<Individual>();
+    }
     
     public Population(Color[][] target) {
     	this.target = target;
     	population = new ArrayList<Individual>();
     	for(int i=0; i<100; i++) {
     		Random r = new Random();
-    		int random = 1 + r.nextInt(50);
-    		population.add(new Individual(random,target));
+    		int random = 5 + r.nextInt(45);
+    		Individual indiv = new Individual(random);
+    		indiv.setFitness(target);
+    		population.add(indiv);
     	}
-    	setBestIndividual();
+    }
+    
+    public Population(Population p) {
+    	this.target = p.getTarget();
+    	this.population = new ArrayList<Individual>(p.getPopulation());
+    }
+    
+    public void setPopulation(ArrayList<Individual> p) {
+    	this.population = p;
     }
     
     public ArrayList<Individual> getPopulation(){
     	return this.population;
     }
     
+    public Color[][] getTarget(){
+    	return this.target;
+    }
+    
+    public void setTarget(Color[][] t){
+    	this.target = t;
+    }
+    
     public void setBestIndividual() {
-    	Collections.sort(population,new IndividualCompare());
-    	this.bestIndividual = population.get(0);
     }
     
     public Individual getBestIndividual() {
-    	return this.bestIndividual;
+    	ArrayList<Individual> copy = new ArrayList<Individual>(population);
+    	Collections.sort(copy,new IndividualCompare());
+    	return copy.get(0);
     }
     
-    public Individual crossover(Individual father, Individual mother){
-    	ArrayList<ConvexPolygon> l = new ArrayList<ConvexPolygon>();
-    	for(int i=0;i<50;i++) {
-    		if(i<25) {
-    			l.add(father.getGenome().get(i));
-    		}else {
-    			l.add(mother.getGenome().get(i));
-    		}
-    	}
-    	Individual son = new Individual(l,target);
-    	return son;
-    }
-    
-    public ArrayList<Individual> selection(){
-    	ArrayList<Individual> selected = new ArrayList<Individual>();
-    	
-    	// We add the 20 best individuals in the selected list and remove them from the sorted list
-    	for(int i=0; i<20; i++) {
-    		selected.add(population.get(i));
-    		population.remove(i);
-    	}
-    	
-    	// We add up 5 more individuals from the sorted list but with the same chance for everyone to be picked
-    	int added = 0;
-    	while(added != 5) {
-	    	for(Individual i : population) {
-	    		Random r = new Random();
-	            int random = r.nextInt(100);
-	            if(random == 50) {
-	            	selected.add(i);
-	            	added++;
-	            }
-	            if(added == 5) {
-	            	break;
-	            }
-	    	}
-    	}    	
-    	// Now we add up a crossover between all the remaining individuals in the population
-    	// TODO
-    	
-    	return selected;
-    }
 }
