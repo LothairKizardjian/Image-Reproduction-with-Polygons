@@ -55,7 +55,9 @@ public class Individual{
     public void setFitness(Color[][] target){
 		Group image = new Group();
 		for(ConvexPolygon p : this.genome){
-		    image.getChildren().add(p);
+			if(!image.getChildren().contains(p)) {
+				image.getChildren().add(p);
+			}
 		}
 	
 		int x = target.length;
@@ -200,26 +202,26 @@ public class Individual{
      * 3- one chance out of two to add a new random polygon or remove one
      */    
     public void mutation(Color[][] target) {
-    	Random rand = new Random();
-        int mutationChance = rand.nextInt(100);
-        if(genome.size() <= 0)
-        		System.out.println(genome.size());
-        int randomPolygon = rand.nextInt(genome.size());
-        
-        /*
-         * We randomly choose the gene that will mutate
-         */
-        ConvexPolygon chosen = genome.get(randomPolygon);
-        
-        /*
-         * 3 random mutation can occur    
-         */
-        if(mutationChance <= 33) {
-    		colorMutation(chosen);
-        }else if(33 < mutationChance && mutationChance <= 66){
-        	shapeMutation(chosen,target);  	
-        }else {
-        	addRemoveMutation(chosen);        	
-        }
+    	if(genome.size()>0) {
+	    	Random rand = new Random();
+	        int mutationChance = rand.nextInt(100);
+	        int randomPolygon = rand.nextInt(genome.size());
+	        
+	        /*
+	         * We randomly choose the gene that will mutate
+	         */
+	        ConvexPolygon chosen = genome.get(randomPolygon);
+	        
+	        /*
+	         * 3 random mutation can occur    
+	         */
+	        if(mutationChance <= 33) {
+	    		colorMutation(chosen);
+	        }else if(33 < mutationChance && mutationChance <= 66){
+	        	shapeMutation(chosen,target);  	
+	        }else {
+	        	addRemoveMutation(chosen);        	
+	        }
+    	}
     }
 }

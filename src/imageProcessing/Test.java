@@ -24,8 +24,33 @@ public class Test extends Application{
 		launch(args);
 	}
 	
-	public void start(Stage myStage){
-		String targetImage = "monaLisa-100.jpg";
+	public Group createResult(Individual indiv,int maxX, int maxY) {
+		Group image = new Group();
+		WritableImage wimg = new WritableImage(maxX,maxY);
+		for(ConvexPolygon cp : indiv.getGenome()) {
+			image.getChildren().add(cp);
+		}
+		image.snapshot(null,wimg);
+		RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
+		try {
+			ImageIO.write(renderedImage, "png", new File("generatedImages/finalResult.png"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		return image;	
+	}
+	
+	public void showImage(Stage myStage,Group image,int maxX,int maxY) {
+		/*
+		 * affichage de l'image dans l'interface graphique
+		 */
+		Scene scene = new Scene(image,maxX, maxY);
+		myStage.setScene(scene);
+		myStage.show();
+	}
+	
+	public Color[][] createColorTab(String targetImage){
 		Color[][] target=null;
 		int maxX=0;
     	int maxY=0;
@@ -52,38 +77,26 @@ public class Test extends Application{
         	System.exit(9);
         }
 		System.out.println("Read target image " + targetImage + " " + maxX + "x" + maxY);
+		return target;
+	}
+	
+	public void start(Stage myStage){
+		Color[][] target = createColorTab("monaLisa-100.jpg");
+		int maxX = target.length;
+		int maxY = target[0].length;
+
+		Population pop = new Population(target);		
+		GeneticAlgorithm GA = new GeneticAlgorithm(
+				pop,
+				10000, // maxGenerationNumber
+				50, //acceptableFitnessThreshold
+				target, // image cible
+				3 //mutationChance
+				);		
+		Individual bestIndividual = GA.selection();			
 		
-		// Création d'une population
-		Population pop = new Population(target);
-		
-		int maxGenerationNumber = 10000;
-		double acceptableFitnessThreshold = 50;
-		GeneticAlgorithm GA = new GeneticAlgorithm(pop,maxGenerationNumber,
-				acceptableFitnessThreshold,target);
-		
-		Individual bestIndividual = GA.selection();		
-		
-		Group image = new Group();
-		WritableImage wimg = new WritableImage(maxX,maxY);
-		for(ConvexPolygon cp : bestIndividual.getGenome()) {
-			image.getChildren().add(cp);
-		}
-		image.snapshot(null,wimg);
-		RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
-		
-		try {
-			ImageIO.write(renderedImage, "png", new File("generatedImages/finalResult.png"));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		
-		/*
-		 * affichage de l'image dans l'interface graphique
-		 */
-		Scene scene = new Scene(image,maxX, maxY);
-		myStage.setScene(scene);
-		myStage.show();
-		
+		Group image = createResult(bestIndividual,maxX,maxY);
+		showImage(myStage,image,maxX,maxY);
 		
 	}
 

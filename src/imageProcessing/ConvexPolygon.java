@@ -37,7 +37,7 @@ public class ConvexPolygon extends Polygon {
 		public ConvexPolygon(){
 			super();
 		}
-		
+				
 		public String toString(){
 			String res = super.toString();
 			res += " " + this.getFill() + " opacity " + this.getOpacity();
