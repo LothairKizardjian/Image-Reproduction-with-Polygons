@@ -57,8 +57,9 @@ public class Test extends Application{
 		Population pop = new Population(target);
 		
 		int maxGenerationNumber = 10000;
-		double acceptableFitnessThreshold = 1000;
-		GeneticAlgorithm GA = new GeneticAlgorithm(pop,maxGenerationNumber,acceptableFitnessThreshold);
+		double acceptableFitnessThreshold = 50;
+		GeneticAlgorithm GA = new GeneticAlgorithm(pop,maxGenerationNumber,
+				acceptableFitnessThreshold,target);
 		
 		Individual bestIndividual = GA.selection();		
 		

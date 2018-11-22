@@ -13,17 +13,24 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 
 public class GeneticAlgorithm {
 	
 	private Population population;
 	private int maxGenerationNumber;
 	private double acceptableFitnessThreshold;
+	private Color[][] target;
 	
-	public GeneticAlgorithm(Population pop, int maxGNb, double fThreshold) {
+	public GeneticAlgorithm(Population pop, int maxGNb, double fThreshold,Color[][] target) {
 		this.population = pop;
 		this.maxGenerationNumber = maxGNb;
 		this.acceptableFitnessThreshold = fThreshold;
+		this.target = target;
+	}
+	
+	public Color[][] getTarget(){
+		return this.target;
 	}
 	
 	/**
@@ -60,7 +67,7 @@ public class GeneticAlgorithm {
     		}
     		i++;
     	}
-    	Individual offSpring = new Individual(l,population.getTarget());
+    	Individual offSpring = new Individual(l,target);
     	return offSpring;
     }
 	
@@ -70,7 +77,7 @@ public class GeneticAlgorithm {
     	int motherSize = mother.getGenome().size();
     	int newGenomeSize = fatherSize/2 + motherSize/2;
 		
-    	Individual offSpring = new Individual(l,population.getTarget());
+    	Individual offSpring = new Individual(l,target);
     	return offSpring;
 	}
 	
@@ -127,6 +134,7 @@ public class GeneticAlgorithm {
 		int currentGenerationNumber = 0;
 		
 		while(!satisfied && currentGenerationNumber < maxGenerationNumber) {
+			System.out.println("Generation n°"+currentGenerationNumber);
 			
 			ArrayList<Individual> newPopulation = new ArrayList<Individual>();
 			currentGenerationNumber++;
@@ -162,7 +170,7 @@ public class GeneticAlgorithm {
 				Random rand = new Random();
 				int r = rand.nextInt(mutationChance);
 				if(r==1) {
-					indiv.mutation();
+					indiv.mutation(target);
 				}
 			}
 			
@@ -173,10 +181,10 @@ public class GeneticAlgorithm {
 				satisfied = true;
 			}
 			selected = population.getBestIndividual();
-			
+			/*
 			Group image = new Group();
-			int maxX = population.getTarget().length;
-			int maxY = population.getTarget()[0].length;
+			int maxX = target.length;
+			int maxY = target[0].length;
 			WritableImage wimg = new WritableImage(maxX,maxY);
 			for(ConvexPolygon cp : selected.getGenome()) {
 				image.getChildren().add(cp);
@@ -188,6 +196,7 @@ public class GeneticAlgorithm {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
+			*/
 		}
 		System.out.println("Not enough generations");
 		return selected;		
