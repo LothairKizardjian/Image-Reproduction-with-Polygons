@@ -14,7 +14,7 @@ public class Population{
     	population = new ArrayList<Individual>();
     	for(int i=0; i<100; i++) {
     		Random r = new Random();
-    		int random = 5 + r.nextInt(45);
+    		int random = r.nextInt(50);
     		Individual indiv = new Individual(random);
     		population.add(indiv);
     	}

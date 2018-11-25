@@ -22,6 +22,8 @@ public class GeneticAlgorithm {
 	private Population population;
 	private int maxGenerationNumber;
 	private double acceptableFitnessThreshold;
+	private Color[][] target;
+	private int mutationChance;
 	
 	public GeneticAlgorithm(Population pop, int maxGNb, double fThreshold, Color[][] t) {
 		this.population = pop;
@@ -31,51 +33,13 @@ public class GeneticAlgorithm {
 	}
 	
 	/**
-	 * Here we generate a new Individual that will result off the crossover between the first half of the father's genom and the second half
-	 * of the mother's genom 
+	 * 
 	 * @param father
 	 * @param mother
-	 * @return a new offSpring based on the father's and mother's genome
+	 * @return a new offSpring with a uniform combination of the father's and the mother's genom
 	 */
-	public Individual singlePointCrossover(Individual father, Individual mother){
-		
-    	ArrayList<ConvexPolygon> l = new ArrayList<ConvexPolygon>();
-    	ArrayList<ConvexPolygon> alreadySeen = new ArrayList<ConvexPolygon>();
-    	int fatherSize = father.getGenome().size();
-    	int motherSize = mother.getGenome().size();
-    	int newGenomeSize = fatherSize/2 + motherSize/2;
-
-    	int i = 0;
-    	int j = 0;
-    	while(i<newGenomeSize) {
-    		if(i<fatherSize/2) {
-        		ConvexPolygon f = father.getGenome().get(i);
-    			if(!alreadySeen.contains(f)){
-    				l.add(f);
-    				alreadySeen.add(f);
-    			}
-    		}else {
-        		ConvexPolygon m = mother.getGenome().get(j);
-        		if(!alreadySeen.contains(m)){
-        			l.add(m);
-    				alreadySeen.add(m);
-        			j++;
-        		}
-    		}
-    		i++;
-    	}
-    	Individual offSpring = new Individual(l);
-    	return offSpring;
-    }
-	
 	public Individual uniformCrossover(Individual father,Individual mother) {
-		ArrayList<ConvexPolygon> l = new ArrayList<ConvexPolygon>();
-		int fatherSize = father.getGenome().size();
-    	int motherSize = mother.getGenome().size();
-    	int newGenomeSize = fatherSize/2 + motherSize/2;
 		
-    	Individual offSpring = new Individual(l);
-    	return offSpring;
 	}
 	
 	/**
@@ -111,79 +75,76 @@ public class GeneticAlgorithm {
 		for(Individual indiv : populationList) {
 			Random rand = new Random();
 			double alpha = (fitnessSum) * rand.nextDouble();
-			double iSum = 0;
 			int j = 0;
 			do{
-				iSum+=populationList.get(j).getFitness();
+				alpha-=populationList.get(j).getFitness();
 				j+=1;
-			}while(iSum<alpha && j<n);
-			selected.add(populationList.get(j));
-		}		
+			}while(alpha>0 && j<n);
+			selected.add(populationList.get(j-1));
+		}
 		return selected;
 	}
+	
+    /**
+     * Generates a new Population based on the crossover of the breeders
+     * @param breeders
+     * @return a new population of size breeders.size()
+     */
+    public ArrayList<Individual> generateNewPopulation(ArrayList<Individual> breeders) {
+    	ArrayList<Individual> pop = new ArrayList<Individual>();
+    	while(pop.size() < population.getPopulation().size()) {
+			Random rand = new Random();
+			int id1 = rand.nextInt(breeders.size());
+			int id2 = rand.nextInt(breeders.size());
+			Individual father = breeders.get(id1);
+			Individual mother = breeders.get(id2);
+			pop.add(uniformCrossover(father,mother));
+		}
+    	return pop;
+    }
 	
 	public Individual selection() {
 				
 		Individual selected = new Individual();
-		ArrayList<Individual> breeders = new ArrayList<Individual>();
-		ArrayList<Individual> populationList = population.getPopulation();
+		Individual bestSoFar = new Individual();
+		double bestFitnessSoFar = 10000000000.0;
 		boolean satisfied = false;
+		int mutationChance = 3;
 		int currentGenerationNumber = 0;
+		ArrayList<Individual> breeders = new ArrayList<Individual>();
 		
 		while(!satisfied && currentGenerationNumber < maxGenerationNumber) {
-			
-			ArrayList<Individual> newPopulation = new ArrayList<Individual>();
+
 			currentGenerationNumber++;
-			/*
-			 * I want to add one quarter of the best individuals of the total population's size to the breeders' list
-			 */
-			breeders.addAll(elitism((int)populationList.size()/2));
-			/*
-			 * Now I add the last 3/4 of the population using the Roulette Wheel Selection algorithm to the breeders' list
-			 */
-			breeders.addAll(rouletteWheelSelection((int)populationList.size()/2));
-			/*
-			 * Now we add the offSprings of the breeders in the new population. The breeders reproducts randomly
-			 */
-			while(newPopulation.size() < populationList.size()) {
-				Random rand = new Random();
-				int id1 = rand.nextInt(populationList.size());
-				int id2 = rand.nextInt(populationList.size());
-				Individual father = populationList.get(id1);
-				Individual mother = populationList.get(id2);
-				newPopulation.add(singlePointCrossover(father,mother));
-			}
+			breeders = rouletteWheelSelection(population.getPopulation().size());
+			Population newPopulation = new Population();
+			newPopulation.getPopulation().addAll(generateNewPopulation(breeders));
 			
-			/*
-			 * A value of 10 means 1 chance out of 10 to undergo mutation
-			 */
-			int mutationChance = 10;
-			
-			/*
-			 * Each individual has a 1 out of mutationChance chance to undergo mutation
-			 */
-			for(Individual indiv : newPopulation) {
+			for(Individual indiv : newPopulation.getPopulation()) {
 				Random rand = new Random();
-				int r = rand.nextInt(mutationChance);
-				if(r==1) {
-					indiv.mutation();
+				int r = rand.nextInt(100);
+				if(r<mutationChance) {
+					indiv.mutation(target);
 				}
 			}
 			
-			this.population.setPopulation(newPopulation);
+			this.population.setPopulation(newPopulation.getPopulation());
 			if(population.getBestIndividual().getFitness() <= acceptableFitnessThreshold) {
 				System.out.println("fitness acceptable : "+population.getBestIndividual().getFitness());
 				selected = population.getBestIndividual();
 				satisfied = true;
 			}
 			selected = population.getBestIndividual();
+			System.out.println("Generation n°"+currentGenerationNumber+" Best current fitness : "+selected.getFitness());
 			
 			Group image = new Group();
 			int maxX = target.length;
 			int maxY = target[0].length;
 			WritableImage wimg = new WritableImage(maxX,maxY);
-			for(ConvexPolygon cp : selected.getGenome()) {
-				image.getChildren().add(cp);
+			for(ConvexPolygon p : selected.getGenome()) {
+				if(!image.getChildren().contains(p)) {
+					image.getChildren().add(p);
+				}
 			}
 			image.snapshot(null,wimg);
 			RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
@@ -192,6 +153,7 @@ public class GeneticAlgorithm {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
+			
 		}
 		System.out.println("Not enough generations");
 		return selected;		

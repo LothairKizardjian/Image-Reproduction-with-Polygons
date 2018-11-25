@@ -22,9 +22,8 @@ public class Individual{
     public Individual(int n){        
         genome=new ArrayList<ConvexPolygon>();
         Random r = new Random();
-        int random = 3 + r.nextInt(ConvexPolygon.maxEdges);
         for(int i=0; i<n; i++) {
-        	genome.add(new ConvexPolygon(random));
+        	genome.add(new ConvexPolygon(ConvexPolygon.maxEdges));
         }
         evaluate();
     }
@@ -62,6 +61,7 @@ public class Individual{
     	Color[][] target = GeneticAlgorithm.target;
     	for(ConvexPolygon p : this.genome){
 		    image.getChildren().add(p);
+
 		}
 	
 		int x = target.length;
@@ -79,82 +79,156 @@ public class Individual{
 			    + Math.pow(c.getGreen()-target[i][j].getGreen(),2);
 		    }
 		}
+		
+		res = Math.sqrt(res);
 		setFitness(res);
 		return res;
+}
+    
+    /**
+     * The polygon has one chance out of two to undergo either a color mutation
+     * or an opacity mutation
+     * @param polygon
+     */
+    public void colorMutation(ConvexPolygon polygon) {
+    	Random gen = new Random();
+    	int random = gen.nextInt(2);
+    	if(random ==1) {
+        	/*
+        	 * Color mutation
+        	 */
+			int r = gen.nextInt(256);
+			int g = gen.nextInt(256);
+			int b = gen.nextInt(256); 
+			polygon.setFill(Color.rgb(r, g, b));
+    	}else {
+    		/*
+    		 * Opacity mutation
+    		 */
+			polygon.setOpacity(gen.nextDouble());        		
+    	}
     }
     
+    /**
+     * The polygon has one chance out of two to get one more vertex or to get
+     * one less vertex (if the conditions are verified)
+     * @param polygon
+     */
+    public void shapeMutation(ConvexPolygon polygon,Color[][] target) {
+    	Random rand = new Random();
+    	int random = rand.nextInt(3);
+    	if(random == 1) {
+    		/*
+    		 * Adding vertex
+    		 */
+    		if(polygon.verteces < ConvexPolygon.maxEdges) {
+    			int x = rand.nextInt(target.length);
+    			int y = rand.nextInt(target[0].length);
+    			polygon.addPoint(x,y);
+    			polygon.verteces++;
+    		}
+    	}else if(random == 2) {
+    		/*
+    		 * Removing vertex
+    		 */
+    		if(polygon.verteces > 3) {
+    			double x = polygon.getPoints().get(0);
+    			double y = polygon.getPoints().get(1);
+    			polygon.getPoints().remove(x);
+    			polygon.getPoints().remove(y);
+    			polygon.verteces--;
+    		}
+    	}else {
+    		/*
+    		 * Translation mutation
+    		 */
+    		boolean canTranslate = true;
+    		int maxX = target.length;
+    		int maxY = target[0].length;
+    		int translationFactor = rand.nextInt(Math.min(maxX,maxY));
+    		for(double point : polygon.getPoints()) {
+    			if(point%2 == 0) {
+    				// This point correspond to a X coordinate
+        			if(point+translationFactor > maxX || point-translationFactor < 0) {
+        				canTranslate = false;
+        			}
+    			}else {
+    				// This point correspond to a Y coordinate
+    				if(point+translationFactor > maxY || point-translationFactor < 0) {
+    					canTranslate = false;
+    				}
+    			}
+    		}
+    		if(canTranslate) {
+    			int randomTranslation = rand.nextInt(2);
+    			if(randomTranslation == 1) {
+        			for(int i = 0; i<polygon.getPoints().size(); i++) {
+        				double newPoint = polygon.getPoints().get(i) + translationFactor;
+        				polygon.getPoints().set(i, newPoint);
+        			}
+    			}else {
+    				for(int i = 0; i<polygon.getPoints().size(); i++) {
+        				double newPoint = polygon.getPoints().get(i) - translationFactor;
+        				polygon.getPoints().set(i, newPoint);
+        			}
+    			}
+    		}
+    	}
+    }
+    
+    /**
+     * There is one chance out of two to either add a new random polygon or to remove the
+     * given polygon
+     * @param polygon
+     */
+    public void addRemoveMutation(ConvexPolygon polygon) {
+    	Random rand = new Random();
+    	int random = rand.nextInt(2);   
+    	if(random == 1) {
+    		/*
+    		 * Removing the polygon
+    		 */
+    		if(genome.size() > 5) {
+    			genome.remove(polygon);
+    		}
+    	}else {
+    		/*
+    		 * Adding a new polygon
+    		 */
+    		if(genome.size()<50) {
+    			int randomEdges = 3 + rand.nextInt(ConvexPolygon.maxEdges);
+    			genome.add(new ConvexPolygon(ConvexPolygon.maxEdges));
+    		}
+    	}
+    }
 
     /**
      * If this function is called the Individual will undergo a certain mutation. The mutation can be the following :
      * 1- new random color for a random polygon
      * 2- one chance out of two to add or remove a vertex for a random polygon
      * 3- one chance out of two to add a new random polygon or remove one
-     */
-    public void mutation() {
-    	Random rand = new Random();
-        int mutationChance = rand.nextInt(100);
-        if(genome.size() <= 0)
-        		System.out.println(genome.size());
-        int randomPolygon = rand.nextInt(genome.size());
-        
-        /*
-         * We randomly choose the gene that will mutate
-         */
-        ConvexPolygon chosen = genome.get(randomPolygon);
-        
-        /*
-         * 3 random mutation can occur    
-         */
-        if(mutationChance <= 33) {
-        	/*
-        	 * Color mutation
-        	 */
-    		Random gen = new Random();
-			int r = gen.nextInt(256);
-			int g = gen.nextInt(256);
-			int b = gen.nextInt(256); 
-			chosen.setOpacity(gen.nextDouble());
-			chosen.setFill(Color.rgb(r, g, b));
-        }else if(33 < mutationChance && mutationChance <= 66){
-        	/*
-        	 * Shape mutation
-        	 */
-        	int random3 = rand.nextInt(2);
-        	if(random3 == 1) {
-        		/*
-        		 * Adding vertex
-        		 */
-        		if(chosen.verteces < 20) {
-        			chosen.genRandomConvexPolygone(chosen.verteces+1);
-        		}
-        	}else {
-        		/*
-        		 * Removing vertex
-        		 */
-        		chosen.genRandomConvexPolygone(chosen.verteces-1);
-        	}        	
-        }else {
-        	/*
-        	 * Add/Remove mutation
-        	 */
-        	int random4 = rand.nextInt(2);   
-        	if(random4 == 1) {
-        		/*
-        		 * Removing the polygon
-        		 */
-        		if(genome.size() > 5) {
-        			genome.remove(chosen);
-        		}
-        	}else {
-        		/*
-        		 * Adding a new polygon
-        		 */
-        		if(genome.size()<50) {
-        			int random5 = 3 + rand.nextInt(ConvexPolygon.maxEdges);
-        			genome.add(new ConvexPolygon(random5));
-        		}
-        	}
-        	
-        }
+     */    
+    public void mutation(Color[][] target) {
+    	if(genome.size()>0) {
+	    	Random rand = new Random();
+	        int mutationChance = rand.nextInt(100);
+	        int randomPolygon = rand.nextInt(genome.size());
+	        
+	        /*
+	         * We randomly choose the gene that will mutate
+	         */
+	        ConvexPolygon chosen = genome.get(randomPolygon);
+	        
+	        /*
+	         * 3 random mutation can occur    
+	         */
+	        if(mutationChance <= 33) {
+	    		colorMutation(chosen);
+	        }else if(33 < mutationChance && mutationChance <= 66){
+	        	shapeMutation(chosen,target);  	
+	        }else {
+	        	addRemoveMutation(chosen);        	
+	        }
+    	}
     }
 }
