@@ -11,6 +11,7 @@ import javafx.scene.paint.Color;
 
 
 public class Individual{
+	public static final int size = 500;
     private ArrayList<ConvexPolygon> genome;
     private double fitness;
     
@@ -25,11 +26,12 @@ public class Individual{
         for(int i=0; i<n; i++) {
         	genome.add(new ConvexPolygon(random));
         }
+        evaluate();
     }
     
-    public Individual(ArrayList<ConvexPolygon> genome,Color[][] target) {
+    public Individual(ArrayList<ConvexPolygon> genome) {
     	this.genome = new ArrayList<ConvexPolygon>(genome);
-    	setFitness(target);
+    	evaluate();
     }    
     
     public List<ConvexPolygon> getGenome() {
@@ -44,14 +46,21 @@ public class Individual{
     	return this.fitness;
     }
     
+    public void setFitness(double f){
+		this.fitness = f;
+    }
+
+   
     /**
      * computes the Indiviual's fitness according to the target parameter. In this case it will be the average of the euclidian distance 
      * for each of the pixels between the target and itself.
      * @param target
+     * @return the fitness of the individual
      */
-    public void setFitness(Color[][] target){
-		Group image = new Group();
-		for(ConvexPolygon p : this.genome){
+    public double evaluate() {
+    	Group image = new Group();
+    	Color[][] target = GeneticAlgorithm.target;
+    	for(ConvexPolygon p : this.genome){
 		    image.getChildren().add(p);
 		}
 	
@@ -69,8 +78,9 @@ public class Individual{
 			    + Math.pow(c.getRed()-target[i][j].getRed(),2)
 			    + Math.pow(c.getGreen()-target[i][j].getGreen(),2);
 		    }
-		}	
-		this.fitness = res;
+		}
+		setFitness(res);
+		return res;
     }
     
 

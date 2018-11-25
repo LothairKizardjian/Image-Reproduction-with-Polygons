@@ -54,11 +54,11 @@ public class Test extends Application{
 		System.out.println("Read target image " + targetImage + " " + maxX + "x" + maxY);
 		
 		// Création d'une population
-		Population pop = new Population(target);
+		Population pop = new Population();
 		
 		int maxGenerationNumber = 10000;
 		double acceptableFitnessThreshold = 1000;
-		GeneticAlgorithm GA = new GeneticAlgorithm(pop,maxGenerationNumber,acceptableFitnessThreshold);
+		GeneticAlgorithm GA = new GeneticAlgorithm(pop,maxGenerationNumber,acceptableFitnessThreshold,target);
 		
 		Individual bestIndividual = GA.selection();		
 		

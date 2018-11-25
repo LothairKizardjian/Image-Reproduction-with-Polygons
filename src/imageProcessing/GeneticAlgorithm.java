@@ -13,17 +13,21 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 
 public class GeneticAlgorithm {
 	
+	public static double mutationRate = 0.1;
+	public static Color[][] target;
 	private Population population;
 	private int maxGenerationNumber;
 	private double acceptableFitnessThreshold;
 	
-	public GeneticAlgorithm(Population pop, int maxGNb, double fThreshold) {
+	public GeneticAlgorithm(Population pop, int maxGNb, double fThreshold, Color[][] t) {
 		this.population = pop;
 		this.maxGenerationNumber = maxGNb;
 		this.acceptableFitnessThreshold = fThreshold;
+		target = t;
 	}
 	
 	/**
@@ -60,7 +64,7 @@ public class GeneticAlgorithm {
     		}
     		i++;
     	}
-    	Individual offSpring = new Individual(l,population.getTarget());
+    	Individual offSpring = new Individual(l);
     	return offSpring;
     }
 	
@@ -70,7 +74,7 @@ public class GeneticAlgorithm {
     	int motherSize = mother.getGenome().size();
     	int newGenomeSize = fatherSize/2 + motherSize/2;
 		
-    	Individual offSpring = new Individual(l,population.getTarget());
+    	Individual offSpring = new Individual(l);
     	return offSpring;
 	}
 	
@@ -175,8 +179,8 @@ public class GeneticAlgorithm {
 			selected = population.getBestIndividual();
 			
 			Group image = new Group();
-			int maxX = population.getTarget().length;
-			int maxY = population.getTarget()[0].length;
+			int maxX = target.length;
+			int maxY = target[0].length;
 			WritableImage wimg = new WritableImage(maxX,maxY);
 			for(ConvexPolygon cp : selected.getGenome()) {
 				image.getChildren().add(cp);
