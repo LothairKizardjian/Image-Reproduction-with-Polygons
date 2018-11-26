@@ -24,7 +24,7 @@ public class Test extends Application{
 		launch(args);
 	}
 	
-	public Group createResult(Individual indiv,int maxX, int maxY) {
+	public static Group createResult(Individual indiv,int maxX, int maxY, String name) {
 		Group image = new Group();
 		WritableImage wimg = new WritableImage(maxX,maxY);
 		for(ConvexPolygon cp : indiv.getGenome()) {
@@ -33,7 +33,7 @@ public class Test extends Application{
 		image.snapshot(null,wimg);
 		RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
 		try {
-			ImageIO.write(renderedImage, "png", new File("generatedImages/finalResult.png"));
+			ImageIO.write(renderedImage, "png", new File("generatedImages/"+name+".png"));
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -41,7 +41,7 @@ public class Test extends Application{
 		return image;	
 	}
 	
-	public void showImage(Stage myStage,Group image,int maxX,int maxY) {
+	public static void showImage(Stage myStage,Group image,int maxX,int maxY) {
 		/*
 		 * affichage de l'image dans l'interface graphique
 		 */
@@ -85,16 +85,16 @@ public class Test extends Application{
 		int maxX = target.length;
 		int maxY = target[0].length;
 
-		Population pop = new Population(target);		
 		GeneticAlgorithm GA = new GeneticAlgorithm(
-				pop,
-				10000, // maxGenerationNumber
+				0.1, // mutationChance
+				0.1, // crossoverRate
+				500, // maxGenerationNumber
 				50, //acceptableFitnessThreshold
-				target, // image cible
+				target // image cible
 				);		
 		
-		Individual bestIndividual = GA.selection();	
-		Group image = createResult(bestIndividual,maxX,maxY);
+		Individual bestIndividual = GA.run();	
+		Group image = createResult(bestIndividual,maxX,maxY,"finalResult");
 		showImage(myStage,image,maxX,maxY);
 		
 	}

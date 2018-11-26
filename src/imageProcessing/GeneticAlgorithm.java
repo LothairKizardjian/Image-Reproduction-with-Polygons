@@ -17,145 +17,136 @@ import javafx.scene.paint.Color;
 
 public class GeneticAlgorithm {
 	
-	public static double mutationRate = 0.1;
+	public static double mutationChance;
+	public static double crossoverRate;
 	public static Color[][] target;
-	private Population population;
 	private int maxGenerationNumber;
 	private double acceptableFitnessThreshold;
-	private Color[][] target;
-	private int mutationChance;
 	
-	public GeneticAlgorithm(Population pop, int maxGNb, double fThreshold, Color[][] t) {
-		this.population = pop;
+	public GeneticAlgorithm(double mutChance, double crossoverR, int maxGNb, double fThreshold, Color[][] t) {
 		this.maxGenerationNumber = maxGNb;
 		this.acceptableFitnessThreshold = fThreshold;
+		mutationChance = mutChance;
+		crossoverRate = crossoverR;
 		target = t;
 	}
 	
 	/**
-	 * 
 	 * @param father
 	 * @param mother
-	 * @return a new offSpring with a uniform combination of the father's and the mother's genom
+	 * @return a two offSprings with a combination of the father's and the mother's genome
 	 */
-	public Individual uniformCrossover(Individual father,Individual mother) {
-		
-	}
-	
-	/**
-	 * For the current population we take the n best individuals and we return them so that they can participate in the reproduction
-	 * This n number is arbitrary
-	 * @return the n best individuals of the population based on their fitness
-	 */
-	public ArrayList<Individual> elitism(int n){
-		ArrayList<Individual> populationList = population.getPopulation();
-		ArrayList<Individual> selected = new ArrayList<Individual>();
-    	ArrayList<Individual> copy = new ArrayList<Individual>(populationList);
-    	Collections.sort(copy,new IndividualCompare());
-		for(int i=0; i<n; i++) {
-			selected.add(copy.get(i));
-		}
-		return selected;
-	}
-    
-	/**
-	 * The higher a fitness of an individual the higher the probability to select him
-	 * @param n the number of individuals we want to select
-	 * @return a new population of the same size as the original one with individuals with a higher fitness
-	 */
-	public ArrayList<Individual> rouletteWheelSelection(int n){
-		ArrayList<Individual> selected = new ArrayList<Individual>();
-		ArrayList<Individual> populationList = population.getPopulation();
-		
-		double fitnessSum = 0;
-		for(Individual indiv : populationList) {
-			fitnessSum += indiv.getFitness();
-		}
-
-		for(Individual indiv : populationList) {
-			Random rand = new Random();
-			double alpha = (fitnessSum) * rand.nextDouble();
-			int j = 0;
-			do{
-				alpha-=populationList.get(j).getFitness();
-				j+=1;
-			}while(alpha>0 && j<n);
-			selected.add(populationList.get(j-1));
-		}
-		return selected;
-	}
-	
-    /**
-     * Generates a new Population based on the crossover of the breeders
-     * @param breeders
-     * @return a new population of size breeders.size()
-     */
-    public ArrayList<Individual> generateNewPopulation(ArrayList<Individual> breeders) {
-    	ArrayList<Individual> pop = new ArrayList<Individual>();
-    	while(pop.size() < population.getPopulation().size()) {
-			Random rand = new Random();
-			int id1 = rand.nextInt(breeders.size());
-			int id2 = rand.nextInt(breeders.size());
-			Individual father = breeders.get(id1);
-			Individual mother = breeders.get(id2);
-			pop.add(uniformCrossover(father,mother));
-		}
-    	return pop;
+    public ArrayList<Individual> crossover(Individual father, Individual mother) {
+    	ArrayList<Individual> offSprings = new ArrayList<Individual>();
+    	offSprings.add(new Individual());
+    	offSprings.add(new Individual());
+    	
+    	if(new Random().nextDouble() < 0.5) {
+	    	int crossoverPoint = Individual.SIZE / 2;
+	    	for(int i = 0; i<Individual.SIZE; i++) {
+	    		if(i <crossoverPoint) {
+	    			offSprings.get(0).getGenome().add(father.getGenome().get(i));
+	    			offSprings.get(1).getGenome().add(mother.getGenome().get(i));
+	    		}else {
+	    			offSprings.get(1).getGenome().add(father.getGenome().get(i));
+	    			offSprings.get(0).getGenome().add(mother.getGenome().get(i));
+	    		}
+	    	}
+    	}else {
+    		for(int i = 0; i<Individual.SIZE; i++) {
+	    		if(i%2 == 0) {
+	    			offSprings.get(0).getGenome().add(father.getGenome().get(i));
+	    			offSprings.get(1).getGenome().add(mother.getGenome().get(i));
+	    		}else {
+	    			offSprings.get(1).getGenome().add(father.getGenome().get(i));
+	    			offSprings.get(0).getGenome().add(mother.getGenome().get(i));
+	    		}
+	    	}
+    	}
+    	offSprings.get(0).evaluate();
+    	offSprings.get(1).evaluate();
+    	return offSprings;
     }
+    
 	
-	public Individual selection() {
-				
-		Individual selected = new Individual();
-		Individual bestSoFar = new Individual();
-		double bestFitnessSoFar = 10000000000.0;
-		boolean satisfied = false;
-		int mutationChance = 3;
-		int currentGenerationNumber = 0;
-		ArrayList<Individual> breeders = new ArrayList<Individual>();
+	/**
+	 * Runs the genetic algorithm over the population given
+	 * @return the best individual generated
+	 */
+	public Individual run() {
+		Random gen = new Random();
+		Population pop = new Population();
+		Individual bestIndividual = pop.getBestIndividual();
 		
-		while(!satisfied && currentGenerationNumber < maxGenerationNumber) {
+		
+		
 
-			currentGenerationNumber++;
-			breeders = rouletteWheelSelection(population.getPopulation().size());
-			Population newPopulation = new Population();
-			newPopulation.getPopulation().addAll(generateNewPopulation(breeders));
-			
-			for(Individual indiv : newPopulation.getPopulation()) {
-				Random rand = new Random();
-				int r = rand.nextInt(100);
-				if(r<mutationChance) {
-					indiv.mutation(target);
-				}
-			}
-			
-			this.population.setPopulation(newPopulation.getPopulation());
-			if(population.getBestIndividual().getFitness() <= acceptableFitnessThreshold) {
-				System.out.println("fitness acceptable : "+population.getBestIndividual().getFitness());
-				selected = population.getBestIndividual();
-				satisfied = true;
-			}
-			selected = population.getBestIndividual();
-			System.out.println("Generation n°"+currentGenerationNumber+" Best current fitness : "+selected.getFitness());
-			
-			Group image = new Group();
-			int maxX = target.length;
-			int maxY = target[0].length;
-			WritableImage wimg = new WritableImage(maxX,maxY);
-			for(ConvexPolygon p : selected.getGenome()) {
-				if(!image.getChildren().contains(p)) {
-					image.getChildren().add(p);
-				}
-			}
-			image.snapshot(null,wimg);
-			RenderedImage renderedImage = SwingFXUtils.fromFXImage(wimg, null); 
-			try {
-				ImageIO.write(renderedImage, "png", new File("generatedImages/result.png"));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			
-		}
-		System.out.println("Not enough generations");
-		return selected;		
+		// main loop
+        
+        for(int i=0; i<maxGenerationNumber; i++) {
+        	Random gen2 = new Random();
+        	for(Individual indivi : pop.getPopulation()) {
+        		int count = 0;
+        		for(Individual i2 : pop.getPopulation()) {
+        			if(indivi.equals( i2)) {
+        				count++;
+        			}
+        		}
+        		System.out.println(--count);
+        	}
+            
+    		ArrayList<Individual> newPop = new ArrayList<Individual>();
+            System.out.println("Best Fitness = " + bestIndividual.getFitness());
+    		
+        	int count;
+
+        	/*
+        	 * we add the ELITISM_SIZE best individuals to the pop 
+        	 */
+        	ArrayList<Individual> elit = pop.elitism(Population.ELITISM_SIZE);
+        	for(count=0; count<Population.ELITISM_SIZE; count++) {
+        		Individual ind = elit.get(count);
+        		if(gen2.nextDouble() < mutationChance) {
+        			ind.mutation();
+        		}
+        		newPop.add(ind);
+        	}
+        	
+        	/*
+        	 * We now indivual in the new pop with roulette wheel selection
+        	 */
+        	while(count < Population.POP_SIZE) {
+        		int tournamentSize = 2;
+
+            	Random gen3 = new Random();
+            	Random gen4 = new Random();
+            	
+        		if(gen3.nextDouble() < crossoverRate) {
+            		Individual father = pop.tournamentSelection(tournamentSize);
+            		Individual mother = pop.tournamentSelection(tournamentSize);
+            		ArrayList<Individual> indivToAdd = crossover(father,mother);
+            		
+            		if(gen4.nextDouble() < mutationChance) {
+            			indivToAdd.get(0).mutation();
+            			indivToAdd.get(1).mutation();
+            		}
+            		newPop.add(indivToAdd.get(0));
+            		newPop.add(indivToAdd.get(1));            		
+        		}else {
+        			Individual ind = pop.tournamentSelection(tournamentSize);
+        			if(gen4.nextDouble() < mutationChance) {
+            			ind.mutation();
+            		}
+        			newPop.add(ind);
+        		}        		
+        		count++;
+        	}
+        	pop.setPopulation(newPop);
+        	pop.evaluate();
+        	bestIndividual = pop.getBestIndividual();
+        	Test.createResult(bestIndividual, target.length, target[0].length,"result");
+        	
+        }
+		return bestIndividual;
 	}
 }

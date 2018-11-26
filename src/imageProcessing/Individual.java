@@ -11,7 +11,7 @@ import javafx.scene.paint.Color;
 
 
 public class Individual{
-	public static final int size = 500;
+	public static final int SIZE = 50;
     private ArrayList<ConvexPolygon> genome;
     private double fitness;
     
@@ -21,7 +21,6 @@ public class Individual{
     
     public Individual(int n){        
         genome=new ArrayList<ConvexPolygon>();
-        Random r = new Random();
         for(int i=0; i<n; i++) {
         	genome.add(new ConvexPolygon(ConvexPolygon.maxEdges));
         }
@@ -29,7 +28,9 @@ public class Individual{
     }
     
     public Individual(ArrayList<ConvexPolygon> genome) {
-    	this.genome = new ArrayList<ConvexPolygon>(genome);
+    	for(int i=0; i<SIZE; i++) {
+    		this.genome.set(i,genome.get(i));
+    	}
     	evaluate();
     }    
     
@@ -110,70 +111,81 @@ public class Individual{
     }
     
     /**
-     * The polygon has one chance out of two to get one more vertex or to get
-     * one less vertex (if the conditions are verified)
+     * Translate the (x,y) point of the polygon by a random value
+     * @param polygon
+     * @param x
+     * @param y
+     */
+    public void pointTranslation(ConvexPolygon polygon,int x,int y) {
+    	boolean canTranslate = true;
+    	Color[][] target = GeneticAlgorithm.target;
+		int maxX = target.length;
+		int maxY = target[0].length;
+    	Random rand = new Random();
+		int translationFactorX = rand.nextInt(maxX);
+		int translationFactorY = rand.nextInt(maxY);
+		double pointX = polygon.getPoints().get(x);
+		double pointY = polygon.getPoints().get(y);
+		if(pointX+translationFactorX > maxX || pointX-translationFactorX < 0 || pointY+translationFactorY > maxY || pointY-translationFactorY < 0) {
+				canTranslate = false;
+		}
+		if(canTranslate) {
+			int randomTranslation = rand.nextInt(2);
+			if(randomTranslation == 1) {
+    			double newPointX = pointX + translationFactorX;
+    			double newPointY = pointY + translationFactorY;
+    			polygon.getPoints().set(x, newPointX);
+    			polygon.getPoints().set(y, newPointY);
+			}else {
+				double newPointX = pointX - translationFactorX;
+    			double newPointY = pointY - translationFactorY;
+    			polygon.getPoints().set(x, newPointX);
+    			polygon.getPoints().set(y, newPointY);
+			}
+		}
+    }
+    
+    /**
+     * The polygon can have one of its vertex removed, or a new one added or a complete translation or a translation of only one of its vertex
      * @param polygon
      */
-    public void shapeMutation(ConvexPolygon polygon,Color[][] target) {
+    public void shapeMutation(ConvexPolygon polygon) {
     	Random rand = new Random();
-    	int random = rand.nextInt(3);
-    	if(random == 1) {
+    	Color[][] target = GeneticAlgorithm.target;
+    	double random = rand.nextDouble();
+    	
+    	
+    	if(random <= -1){
     		/*
-    		 * Adding vertex
+    		 * Translation mutation of all points
     		 */
-    		if(polygon.verteces < ConvexPolygon.maxEdges) {
-    			int x = rand.nextInt(target.length);
-    			int y = rand.nextInt(target[0].length);
-    			polygon.addPoint(x,y);
-    			polygon.verteces++;
-    		}
-    	}else if(random == 2) {
-    		/*
-    		 * Removing vertex
-    		 */
-    		if(polygon.verteces > 3) {
-    			double x = polygon.getPoints().get(0);
-    			double y = polygon.getPoints().get(1);
-    			polygon.getPoints().remove(x);
-    			polygon.getPoints().remove(y);
-    			polygon.verteces--;
+    		for(int i=0; i<polygon.getPoints().size()-1; i++) {
+    			pointTranslation(polygon,i,i+1);
     		}
     	}else {
     		/*
-    		 * Translation mutation
+    		 * Translation mutation of a single point
     		 */
-    		boolean canTranslate = true;
-    		int maxX = target.length;
-    		int maxY = target[0].length;
-    		int translationFactor = rand.nextInt(Math.min(maxX,maxY));
-    		for(double point : polygon.getPoints()) {
-    			if(point%2 == 0) {
-    				// This point correspond to a X coordinate
-        			if(point+translationFactor > maxX || point-translationFactor < 0) {
-        				canTranslate = false;
-        			}
-    			}else {
-    				// This point correspond to a Y coordinate
-    				if(point+translationFactor > maxY || point-translationFactor < 0) {
-    					canTranslate = false;
-    				}
-    			}
+    		int x;
+    		int y;
+    		x = rand.nextInt(polygon.getPoints().size());
+    		if(x%2 == 0) {
+    			/*
+    			 * x is indeed a x coordinate
+    			 */
+    			y = x+1;
+    		}else {
+    			/*
+    			 * x randomly took a y coordinate
+    			 */
+    			y = x;
+    			x = x-1;
     		}
-    		if(canTranslate) {
-    			int randomTranslation = rand.nextInt(2);
-    			if(randomTranslation == 1) {
-        			for(int i = 0; i<polygon.getPoints().size(); i++) {
-        				double newPoint = polygon.getPoints().get(i) + translationFactor;
-        				polygon.getPoints().set(i, newPoint);
-        			}
-    			}else {
-    				for(int i = 0; i<polygon.getPoints().size(); i++) {
-        				double newPoint = polygon.getPoints().get(i) - translationFactor;
-        				polygon.getPoints().set(i, newPoint);
-        			}
-    			}
-    		}
+    		pointTranslation(polygon,x,y);
     	}
+    }
+    
+    public void pointMutation(ConvexPolygon p,int x,int y,int translationFactor) {
     }
     
     /**
@@ -183,12 +195,12 @@ public class Individual{
      */
     public void addRemoveMutation(ConvexPolygon polygon) {
     	Random rand = new Random();
-    	int random = rand.nextInt(2);   
+    	int random = rand.nextInt(2);
     	if(random == 1) {
     		/*
     		 * Removing the polygon
     		 */
-    		if(genome.size() > 5) {
+    		if(genome.size() > 1) {
     			genome.remove(polygon);
     		}
     	}else {
@@ -197,7 +209,7 @@ public class Individual{
     		 */
     		if(genome.size()<50) {
     			int randomEdges = 3 + rand.nextInt(ConvexPolygon.maxEdges);
-    			genome.add(new ConvexPolygon(ConvexPolygon.maxEdges));
+    			genome.add(new ConvexPolygon(randomEdges));
     		}
     	}
     }
@@ -208,10 +220,11 @@ public class Individual{
      * 2- one chance out of two to add or remove a vertex for a random polygon
      * 3- one chance out of two to add a new random polygon or remove one
      */    
-    public void mutation(Color[][] target) {
+    public void mutation() {
+    	
     	if(genome.size()>0) {
 	    	Random rand = new Random();
-	        int mutationChance = rand.nextInt(100);
+	    	double mutationChance = rand.nextDouble();
 	        int randomPolygon = rand.nextInt(genome.size());
 	        
 	        /*
@@ -222,12 +235,10 @@ public class Individual{
 	        /*
 	         * 3 random mutation can occur    
 	         */
-	        if(mutationChance <= 33) {
+	        if(mutationChance < 0.3) {
 	    		colorMutation(chosen);
-	        }else if(33 < mutationChance && mutationChance <= 66){
-	        	shapeMutation(chosen,target);  	
-	        }else {
-	        	addRemoveMutation(chosen);        	
+	        }else{
+	        	shapeMutation(chosen);  	
 	        }
     	}
     }

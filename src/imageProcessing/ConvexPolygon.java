@@ -17,7 +17,7 @@ public class ConvexPolygon extends Polygon {
 		static final int maxNumPoints=3;
 		static Random gen = new Random();
 		static int max_X,max_Y;
-		static int verteces;
+		int verteces;
 		static int maxEdges = 3;
 		NumberFormat nf = new DecimalFormat("##.00");
 		
