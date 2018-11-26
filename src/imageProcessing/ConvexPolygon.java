@@ -19,6 +19,7 @@ public class ConvexPolygon extends Polygon {
 		static int max_X,max_Y;
 		int verteces;
 		static int maxEdges = 3;
+		LinkedList<Point> pointList;
 		NumberFormat nf = new DecimalFormat("##.00");
 		
 		
@@ -26,7 +27,7 @@ public class ConvexPolygon extends Polygon {
 		public ConvexPolygon(int numPoints){
 			super();
 			verteces = numPoints;
-			genRandomConvexPolygone(numPoints);
+			pointList = genRandomConvexPolygone(numPoints);
 			int r = gen.nextInt(256);
 			int g = gen.nextInt(256);
 			int b = gen.nextInt(256); 
@@ -50,7 +51,7 @@ public class ConvexPolygon extends Polygon {
 		}
 		
 		// http://cglab.ca/~sander/misc/ConvexGeneration/convex.html
-		public void genRandomConvexPolygone(int n){
+		public LinkedList<Point> genRandomConvexPolygone(int n){
 			List<Point> points = new LinkedList<Point>();
 			List<Integer> abs = new ArrayList<>();
 			List<Integer> ord = new ArrayList<>();
@@ -136,52 +137,9 @@ public class ConvexPolygon extends Polygon {
 			for (Point p : points)
 				addPoint(p.getX(), p.getY());
 			
-		}
-		
-		
-	
-		
-		
-		public class Point {
 
-			int x,y;
-
-			// generate a random point
-			public Point(){
-				x= gen.nextInt(max_X);
-				y= gen.nextInt(max_Y);
-			}
-			
-			public Point(int x, int y){
-				this.x=x;
-				this.y=y;
-			}
-			
-			public int getX(){return x;}
-			public int getY(){return y;}
-			public void translate(int vx,int vy){
-				x += vx;
-				y += vy;
-			}
-			
-			public boolean equals(Object o){
-				if (o==null)
-					return false;
-				else if (o == this)
-					return true;
-				else if (o instanceof Point)
-					return ((Point) o).x== this.x && ((Point) o).y== this.y;
-				else
-					return false;
-			}
-			
-			public String toString(){
-				NumberFormat nf = new DecimalFormat("#.00");
-				return "(" + x + "," + y+")"; // + nf.format(Math.atan2(y, x))+")";
-			}
+			return (LinkedList<Point>) points;
 			
 		}
-		
-		
 	
 }

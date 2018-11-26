@@ -22,10 +22,12 @@ public class GeneticAlgorithm {
 	public static Color[][] target;
 	private int maxGenerationNumber;
 	private double acceptableFitnessThreshold;
+	private Individual bestIndividual;
 	
 	public GeneticAlgorithm(double mutChance, double crossoverR, int maxGNb, double fThreshold, Color[][] t) {
 		this.maxGenerationNumber = maxGNb;
 		this.acceptableFitnessThreshold = fThreshold;
+		bestIndividual = null;
 		mutationChance = mutChance;
 		crossoverRate = crossoverR;
 		target = t;
@@ -36,114 +38,66 @@ public class GeneticAlgorithm {
 	 * @param mother
 	 * @return a two offSprings with a combination of the father's and the mother's genome
 	 */
-    public ArrayList<Individual> crossover(Individual father, Individual mother) {
-    	ArrayList<Individual> offSprings = new ArrayList<Individual>();
-    	offSprings.add(new Individual());
-    	offSprings.add(new Individual());
-    	
-    	if(new Random().nextDouble() < 0.5) {
-	    	int crossoverPoint = Individual.SIZE / 2;
-	    	for(int i = 0; i<Individual.SIZE; i++) {
-	    		if(i <crossoverPoint) {
-	    			offSprings.get(0).getGenome().add(father.getGenome().get(i));
-	    			offSprings.get(1).getGenome().add(mother.getGenome().get(i));
-	    		}else {
-	    			offSprings.get(1).getGenome().add(father.getGenome().get(i));
-	    			offSprings.get(0).getGenome().add(mother.getGenome().get(i));
-	    		}
+    public Individual crossover(Individual father, Individual mother) {
+    	Individual offSpring = new Individual();
+	    for(int i = 0; i<Individual.SIZE; i++) {
+	    	if(new Random().nextDouble() < 0.5) {
+	    		offSpring.getGenome().add(father.getGenome().get(i));
+	    	}else {
+	    		offSpring.getGenome().add(mother.getGenome().get(i));
 	    	}
-    	}else {
-    		for(int i = 0; i<Individual.SIZE; i++) {
-	    		if(i%2 == 0) {
-	    			offSprings.get(0).getGenome().add(father.getGenome().get(i));
-	    			offSprings.get(1).getGenome().add(mother.getGenome().get(i));
-	    		}else {
-	    			offSprings.get(1).getGenome().add(father.getGenome().get(i));
-	    			offSprings.get(0).getGenome().add(mother.getGenome().get(i));
-	    		}
-	    	}
-    	}
-    	offSprings.get(0).evaluate();
-    	offSprings.get(1).evaluate();
-    	return offSprings;
+	   	}
+    	return offSpring;
     }
-    
 	
 	/**
 	 * Runs the genetic algorithm over the population given
 	 * @return the best individual generated
 	 */
 	public Individual run() {
-		Random gen = new Random();
 		Population pop = new Population();
-		Individual bestIndividual = pop.getBestIndividual();
-		
-		
-		
+		bestIndividual = pop.getBestIndividual();
 
 		// main loop
         
         for(int i=0; i<maxGenerationNumber; i++) {
-        	Random gen2 = new Random();
-        	for(Individual indivi : pop.getPopulation()) {
-        		int count = 0;
-        		for(Individual i2 : pop.getPopulation()) {
-        			if(indivi.equals( i2)) {
-        				count++;
-        			}
-        		}
-        		System.out.println(--count);
-        	}
-            
-    		ArrayList<Individual> newPop = new ArrayList<Individual>();
-            System.out.println("Best Fitness = " + bestIndividual.getFitness());
-    		
-        	int count;
-
-        	/*
-        	 * we add the ELITISM_SIZE best individuals to the pop 
-        	 */
-        	ArrayList<Individual> elit = pop.elitism(Population.ELITISM_SIZE);
-        	for(count=0; count<Population.ELITISM_SIZE; count++) {
-        		Individual ind = elit.get(count);
-        		if(gen2.nextDouble() < mutationChance) {
-        			ind.mutation();
-        		}
-        		newPop.add(ind);
-        	}
         	
-        	/*
-        	 * We now indivual in the new pop with roulette wheel selection
-        	 */
-        	while(count < Population.POP_SIZE) {
-        		int tournamentSize = 2;
-
-            	Random gen3 = new Random();
-            	Random gen4 = new Random();
+            System.out.println("Best Fitness So Far = " + bestIndividual.getFitness());
+            
+        	Random gen = new Random();            
+        	ArrayList<Individual> newPop = new ArrayList<>();
+    		
+            // Elitism
+            ArrayList<Individual> elit = pop.elitism(5);
+            for(Individual id : elit) {
+            	Individual indtmp = new Individual(id.getGenome());
+            	newPop.add(indtmp);
+            }
+            
+        	while(newPop.size() < Population.POP_SIZE && bestIndividual.getFitness() > acceptableFitnessThreshold) {
+        		int tournamentSize = 5;
             	
-        		if(gen3.nextDouble() < crossoverRate) {
-            		Individual father = pop.tournamentSelection(tournamentSize);
-            		Individual mother = pop.tournamentSelection(tournamentSize);
-            		ArrayList<Individual> indivToAdd = crossover(father,mother);
-            		
-            		if(gen4.nextDouble() < mutationChance) {
-            			indivToAdd.get(0).mutation();
-            			indivToAdd.get(1).mutation();
-            		}
-            		newPop.add(indivToAdd.get(0));
-            		newPop.add(indivToAdd.get(1));            		
-        		}else {
-        			Individual ind = pop.tournamentSelection(tournamentSize);
-        			if(gen4.nextDouble() < mutationChance) {
-            			ind.mutation();
-            		}
-        			newPop.add(ind);
-        		}        		
-        		count++;
+            	Individual father = pop.tournamentSelection(tournamentSize);
+            	Individual mother = pop.tournamentSelection(tournamentSize);
+            	Individual offSpring = pop.tournamentSelection(tournamentSize);
+            	if(gen.nextDouble() < crossoverRate) {
+            		offSpring = crossover(father,mother);
+            	}
+            	if(gen.nextDouble() < mutationChance) {
+            		offSpring.mutation();
+            	}
+            	newPop.add(offSpring);
+            	
         	}
         	pop.setPopulation(newPop);
         	pop.evaluate();
-        	bestIndividual = pop.getBestIndividual();
+        	if(bestIndividual.getFitness() > pop.getBestIndividual().getFitness()) {
+        		System.out.println("Current best fitness : "+bestIndividual.getFitness());
+        		System.out.println("Potential better fitness : "+pop.getBestIndividual().getFitness());
+        		bestIndividual = pop.getBestIndividual();
+        	}  
+        	  	
+           
         	Test.createResult(bestIndividual, target.length, target[0].length,"result");
         	
         }
