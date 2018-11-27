@@ -17,17 +17,15 @@ public class Population{
     public Population() {
     	population = new ArrayList<Individual>();
     	for(int i=0; i<POP_SIZE; i++) {
-    		Individual indiv = new Individual(Individual.SIZE);
+    		Individual indiv = new Individual(Individual.SIZE,"t"+i);
     		population.add(indiv);
     	}
     	this.evaluate();
     }
     
     public void setPopulation(ArrayList<Individual> p) {
-    	for(int i=0; i<POP_SIZE; i++) {
-    		this.population.set(i, p.get(i));
-    	}
-    	evaluate();
+    	population.clear();
+    	population.addAll(p);
     }
     
     public ArrayList<Individual> getPopulation(){
@@ -87,6 +85,7 @@ public class Population{
     	copy.sort(new IndividualCompare());
     	for(int i = 0; i<n; i++) {
     		selected.add(copy.get(i));
+    		population.remove(copy.get(i));
     	}
     	return selected;
     }

@@ -86,10 +86,8 @@ public class Test extends Application{
 		int maxY = target[0].length;
 
 		GeneticAlgorithm GA = new GeneticAlgorithm(
-				0.3, // mutationChance
-				0.8, // crossoverRate
-				50, // maxGenerationNumber
-				50, //acceptableFitnessThreshold
+				100000000, // maxGenerationNumber
+				10, //acceptableFitnessThreshold
 				target // image cible
 				);		
 		

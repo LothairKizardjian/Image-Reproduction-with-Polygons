@@ -19,7 +19,10 @@ public class ConvexPolygon extends Polygon {
 		static int max_X,max_Y;
 		int verteces;
 		static int maxEdges = 3;
-		LinkedList<Point> pointList;
+		int r;
+		int g;
+		int b;
+		double opacity;
 		NumberFormat nf = new DecimalFormat("##.00");
 		
 		
@@ -27,16 +30,31 @@ public class ConvexPolygon extends Polygon {
 		public ConvexPolygon(int numPoints){
 			super();
 			verteces = numPoints;
-			pointList = genRandomConvexPolygone(numPoints);
-			int r = gen.nextInt(256);
-			int g = gen.nextInt(256);
-			int b = gen.nextInt(256); 
+			genRandomConvexPolygone(numPoints);
+			r = gen.nextInt(256);
+			g = gen.nextInt(256);
+			b = gen.nextInt(256); 
 			this.setFill(Color.rgb(r, g, b));
-			this.setOpacity(gen.nextDouble());
+			this.opacity = gen.nextDouble();
+			this.setOpacity(opacity);
 		}
 		
 		public ConvexPolygon(){
 			super();
+		}
+		
+		public ConvexPolygon(ConvexPolygon p) {
+			this.verteces = p.verteces;
+			this.getPoints().clear();
+			for(double point : p.getPoints()) {
+				this.getPoints().add(point);
+			}
+			r = p.r;
+			g = p.g;
+			b = p.b;
+			opacity = p.opacity;
+			this.setFill(Color.rgb(r, g, b));
+			this.setOpacity(opacity);
 		}
 				
 		public String toString(){
@@ -51,7 +69,7 @@ public class ConvexPolygon extends Polygon {
 		}
 		
 		// http://cglab.ca/~sander/misc/ConvexGeneration/convex.html
-		public LinkedList<Point> genRandomConvexPolygone(int n){
+		public void genRandomConvexPolygone(int n){
 			List<Point> points = new LinkedList<Point>();
 			List<Integer> abs = new ArrayList<>();
 			List<Integer> ord = new ArrayList<>();
@@ -137,9 +155,50 @@ public class ConvexPolygon extends Polygon {
 			for (Point p : points)
 				addPoint(p.getX(), p.getY());
 			
-
-			return (LinkedList<Point>) points;
 			
 		}
-	
+		
+		public class Point {
+			int x,y;
+			Random gen = new Random();
+
+			// generate a random point
+			public Point(){
+				x= gen.nextInt(ConvexPolygon.max_X);
+				y= gen.nextInt(ConvexPolygon.max_Y);
+			}
+			
+			public Point(int x, int y){
+				this.x=x;
+				this.y=y;
+			}
+			
+			public Point(Point p) {
+				this.x = p.x;
+				this.y = p.y;
+			}
+			
+			public int getX(){return x;}
+			public int getY(){return y;}
+			public void translate(int vx,int vy){
+				x += vx;
+				y += vy;
+			}
+			
+			public boolean equals(Object o){
+				if (o==null)
+					return false;
+				else if (o == this)
+					return true;
+				else if (o instanceof Point)
+					return ((Point) o).x== this.x && ((Point) o).y== this.y;
+				else
+					return false;
+			}
+			
+			public String toString(){
+				NumberFormat nf = new DecimalFormat("#.00");
+				return "(" + x + "," + y+")"; // + nf.format(Math.atan2(y, x))+")";
+			}
+		}
 }
