@@ -37,11 +37,11 @@ public class ConvexPolygon extends Polygon {
 				g = gen.nextInt(256);
 				b = gen.nextInt(256); 
 				
-			}else if(format == "white") {
+			}else if(format == "black") {
 				r = 0;
 				g = 0;
 				b = 0;
-			}else if(format == "black") {
+			}else if(format == "white") {
 				r = 255;
 				g = 255; 
 				b = 255;

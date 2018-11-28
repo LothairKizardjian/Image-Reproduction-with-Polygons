@@ -312,33 +312,31 @@ public class Individual{
     	Individual bestIndividual = this;
 		Test.createResult(bestIndividual, GeneticAlgorithm.target.length, GeneticAlgorithm.target[0].length,getName()+"startingImage");
 		// main loop
-        for(int i=0; i<GeneticAlgorithm.maxGenerationNumber && bestIndividual.getFitness() > GeneticAlgorithm.acceptableFitnessThreshold; i++) {
+    	double lastFitness = 0;
+    	int mutationMethod = 1;
+        for(int i=1; bestIndividual.getFitness() > GeneticAlgorithm.acceptableFitnessThreshold; i++) {
         	
         	
             Individual copy = new Individual(bestIndividual.getGenome());
-            double copyFitness = copy.getFitness();
-            if(copyFitness > 15000) {
-            	copy.hardMutation();
-            }else if(copyFitness > 5000) {
-            	copy.mediumMutation(); 
-            }else if(copyFitness > 4000){
-            	copy.softMutation(0.5);
-            }else if(copyFitness > 3000){
-            	copy.softMutation(0.25);
-            }else if(copyFitness > 2000){
-            	copy.softMutation(0.125);
-            }else if(copyFitness > 1000){
-            	copy.softMutation(0.0625);
-            }else if(copyFitness > 500){
-            	copy.softMutation(0.03125);
-            }else {
-            	copy.softMutation(0.15625);
+            if(i%1000 == 0) {     
+                System.out.println(getName()+" fitness =  " + bestIndividual.getFitness());
+                System.out.println("last fitnes - Best fitness ="+(lastFitness-bestIndividual.getFitness()));
+            	if(lastFitness-bestIndividual.getFitness()< 100) {
+            		mutationMethod = 2;
+            	}else {
+            		mutationMethod = 1;
+            	}
+            	lastFitness = bestIndividual.getFitness();
+            }
+            if(mutationMethod == 1) {
+            	copy.mediumMutation();
+            }else if(mutationMethod == 2) {
+            	copy.softMutation(0.1);
             }
             copy.evaluate();
             
             if(copy.getFitness() < bestIndividual.getFitness()) {
             	bestIndividual = copy;
-                System.out.println(getName()+" fitness =  " + bestIndividual.getFitness());
                 Test.createResult(bestIndividual, GeneticAlgorithm.target.length, GeneticAlgorithm.target[0].length,getName()+"bestSoFar");
             }
         	

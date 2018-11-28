@@ -81,7 +81,8 @@ public class Test extends Application{
 	}
 	
 	public void start(Stage myStage){
-		Color[][] target = createColorTab("generatedImages/firefox.jpg");
+		String name = "monaLisa-200.jpg";
+		Color[][] target = createColorTab("generatedImages/"+name);
 		int maxX = target.length;
 		int maxY = target[0].length;
 
@@ -92,7 +93,7 @@ public class Test extends Application{
 				);		
 		
 		Individual bestIndividual = GA.run();	
-		Group image = createResult(bestIndividual,maxX,maxY,"finalResult");
+		Group image = createResult(bestIndividual,maxX,maxY,name+"-finalResult");
 		showImage(myStage,image,maxX,maxY);
 		
 	}

@@ -38,7 +38,7 @@ public class GeneticAlgorithm {
 		 * "black" : all the polygons will have (R=0,G=0,B=0)
 		 * "white" : all the polygons will have (R=255,G=255,B=255)
 		 */
-		String format = "color";		
+		String format = "black";		
 		Individual t1 = new Individual(50,"T1",format);
 		t1.run();
 		Individual bestIndividual=t1;
