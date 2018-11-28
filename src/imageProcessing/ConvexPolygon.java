@@ -19,23 +19,38 @@ public class ConvexPolygon extends Polygon {
 		static int max_X,max_Y;
 		int verteces;
 		static int maxEdges = 3;
-		int r;
-		int g;
-		int b;
+		int colors[] = new int[3];
 		double opacity;
 		NumberFormat nf = new DecimalFormat("##.00");
 		
 		
 		// randomly generates a polygon
-		public ConvexPolygon(int numPoints){
+		public ConvexPolygon(int numPoints,String format){
 			super();
 			verteces = numPoints;
 			genRandomConvexPolygone(numPoints);
-			r = gen.nextInt(256);
-			g = gen.nextInt(256);
-			b = gen.nextInt(256); 
+			int r = 0;
+			int g = 0;
+			int b = 0;
+			if(format == "color") {
+				r = gen.nextInt(256);
+				g = gen.nextInt(256);
+				b = gen.nextInt(256); 
+				
+			}else if(format == "white") {
+				r = 0;
+				g = 0;
+				b = 0;
+			}else if(format == "black") {
+				r = 255;
+				g = 255; 
+				b = 255;
+			}
+			colors[0] = r;
+			colors[1] = g;
+			colors[2] = b;
 			this.setFill(Color.rgb(r, g, b));
-			this.opacity = gen.nextDouble();
+			this.opacity = 0.0;
 			this.setOpacity(opacity);
 		}
 		
@@ -49,12 +64,17 @@ public class ConvexPolygon extends Polygon {
 			for(double point : p.getPoints()) {
 				this.getPoints().add(point);
 			}
-			r = p.r;
-			g = p.g;
-			b = p.b;
+			for(int i=0; i<colors.length; i++) {
+				colors[i] = p.colors[i];
+			}
 			opacity = p.opacity;
-			this.setFill(Color.rgb(r, g, b));
+			this.setFill(Color.rgb(colors[0], colors[1], colors[2]));
 			this.setOpacity(opacity);
+		}
+		
+		public void commitChanges() {
+			this.setFill(Color.rgb(colors[0], colors[1], colors[2]));
+			this.setOpacity(opacity);			
 		}
 				
 		public String toString(){

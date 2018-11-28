@@ -81,7 +81,7 @@ public class Test extends Application{
 	}
 	
 	public void start(Stage myStage){
-		Color[][] target = createColorTab("monaLisa-100.jpg");
+		Color[][] target = createColorTab("generatedImages/firefox.jpg");
 		int maxX = target.length;
 		int maxY = target[0].length;
 

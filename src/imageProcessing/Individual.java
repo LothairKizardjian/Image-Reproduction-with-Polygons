@@ -20,13 +20,13 @@ public class Individual{
     	this.genome = new ArrayList<ConvexPolygon>();
     }
     
-    public Individual(int n,String s){  
+    public Individual(int n,String s,String format){  
     	name = s;
         genome=new ArrayList<ConvexPolygon>();
         Random rand = new Random();
         for(int i=0; i<n; i++) {
 			int randomEdges = 3 + rand.nextInt(ConvexPolygon.maxEdges);
-        	genome.add(new ConvexPolygon(ConvexPolygon.maxEdges));
+        	genome.add(new ConvexPolygon(ConvexPolygon.maxEdges,format));
         }
         evaluate();
     }
@@ -92,220 +92,220 @@ public class Individual{
 			    + Math.pow(c.getGreen()-target[i][j].getGreen(),2);
 		    }
 		}		
-		res = Math.sqrt(res);
 		fitness = res;
 		return res;
-}
+    }
+    
     
     /**
-     * The polygon has one chance out of two to undergo either a color mutation
-     * or an opacity mutation
-     * @param polygon
+     * Checks if the color C can change by delta amount (i.e it's 0 < c+delta > 255)
+     * @param c
+     * @param delta
+     * @return
      */
-    public void polygonColorMutation(ConvexPolygon polygon) {
+    public boolean canChangeColor(int c, int delta) {
+    	if(c+delta < 0 || c+delta > 255) {
+    		return false;
+    	}
+    	return true;
+    }
+    
+    /**
+     * Change the color c of the polygon by a percentage (delta)
+     * If the color c is the Red value : c = 144 for example and delta = 0.1
+     * then the new value of c is 144 + 144*0.1 = 144 + 14.4 = 144 + 14 = 158
+     * @param polygon
+     * @param c
+     * @param delta
+     */
+    public void changeColor(ConvexPolygon polygon, int c, double delta) {
+    	int colorVal = polygon.colors[c];
+    	int deltaColor = (int) (colorVal * delta);
+    	if(canChangeColor(colorVal,deltaColor)) {
+    		polygon.colors[c] += delta;
+    	}else if(canChangeColor(colorVal,-deltaColor)) {
+    		polygon.colors[c] -= delta;
+    	}
+    }
+    
+    /**
+     * Checks if the opacity can change by delta amount
+     * @param opacity
+     * @param delta
+     * @return
+     */
+    public boolean canChangeOpacity(double opacity, double delta) {
+    	if(opacity + delta < 0 || opacity + delta > 1) {
+    		// an opacity of 0 is stupid
+    		return false;
+    	}
+    	return true;
+    }
+    
+    /**
+     * Change the opacity of the polygon by a percentage (delta)
+     * If the opacity is 0.84 and delta is 0.1 then the new value
+     * of the opacity is 0.84 + 0.84 * 0.1 = 0.84 + 0.084 = 0.924
+     * @param polygon
+     * @param delta
+     */
+    public void changeOpacity(ConvexPolygon polygon, double delta) {
+    	double deltaOp = polygon.opacity * delta;
+    	if(canChangeOpacity(polygon.opacity,deltaOp)) {
+    		polygon.opacity += deltaOp;
+    	}else {
+    		polygon.opacity -= deltaOp;
+    	}
+    }
+    
+    /**
+     * Checks if the value x can change by delta
+     * it must be between 0 and max
+     * @param max
+     * @param x
+     * @param delta
+     * @return
+     */
+    public boolean canChangeValue(double max, double x, double delta) {
+    	if(x+delta < 0 || x+delta > max) {
+    		return false;
+    	}
+    	return true;
+    }
+    
+    /**
+     * Change the value of a vertex of the polygon by a percentage (delta) 
+     * of its value.
+     * @param polygon
+     * @param max
+     * @param v
+     * @param delta
+     */
+    public void changeVertex(ConvexPolygon polygon,double max, int v, double delta) {
+    	double valV = polygon.getPoints().get(v);
+    	double deltaV = valV * delta;
+    	if(canChangeValue(max,v,deltaV)) {
+    		polygon.getPoints().set(v, valV+deltaV);
+    	}else {
+    		polygon.getPoints().set(v, valV-deltaV);
+    	}
+    }
+    
+    /**
+     * Changes a parameter (R,G,B,Opacity,X,Y) of a random polygon by a small delta
+     */
+    public void softMutation(double d) {    
     	Random gen = new Random();
-    	int random = gen.nextInt(2);
-    	if(random ==1) {
+    	double delta = gen.nextDouble() * d;
+    	int polygonID = gen.nextInt(genome.size());
+    	ConvexPolygon polygon = genome.get(polygonID);
+    	if(gen.nextDouble() < 0.3) {
         	/*
         	 * Color mutation
         	 */
-			int r = gen.nextInt(256);
-			int g = gen.nextInt(256);
-			int b = gen.nextInt(256); 
-			polygon.setFill(Color.rgb(r, g, b));
+        	int color = gen.nextInt(3);
+        	changeColor(polygon,color,delta);
+    	}else if(gen.nextDouble() > 0.3 && gen.nextDouble() <= 0.6) {
+        	/*
+        	 * Opacity mutation
+        	 */
+    		changeOpacity(polygon,delta);
     	}else {
     		/*
-    		 * Opacity mutation
-    		 */
-			polygon.setOpacity(gen.nextDouble());        		
-    	}
-    }
-    
-    /**
-     * The random-number first polygons will undergo a color mutation
-     */
-    public void genomeColorMutation() {
-    	Random gen = new Random();
-    	int random = gen.nextInt(genome.size());
-    	for(int i=0; i<random; i++) {
-    		polygonColorMutation(genome.get(i));
-    	}
-    }
-    
-    /**
-     * Checks if the point of the polygon of value (valX,valY) can translation by (translationX,translationY) within the (maxX * maxY) image
-     * @param maxX
-     * @param maxY
-     * @param valX
-     * @param valY
-     * @param translationX
-     * @param translationY
-     * @return
-     */
-    public boolean canTranslatePoint(ConvexPolygon polygon,int maxX, int maxY,int x,int y, double translationX, double translationY) {
-    	double valX = polygon.getPoints().get(x);
-    	double valY = polygon.getPoints().get(y);
-    	if(valX + translationX > maxX || valX - translationX < 0 
-				|| valY + translationY > maxY || valY - translationY < 0) {
-			return false;
-    	}
-    	return true;
-    }
-    
-    /**
-     * Checks if the whole polygon can translate by (translationX,translationY) value within the (maxX * maxY) image
-     * @param polygon
-     * @param maxX
-     * @param maxY
-     * @param translationX
-     * @param translationY
-     * @return
-     */
-    public boolean canTranslatePolygon(ConvexPolygon polygon, int maxX, int maxY, double translationX, double translationY) {
-    	for(int i=0; i<polygon.getPoints().size()-1;i++) {
-    		if(canTranslatePoint(polygon,maxX,maxY,i,i+1,translationX,translationY) == false) {
-    			return false;
-    		}
-    	}
-    	return true;
-    }
-    
-    /**
-     * Translate the (x,y) point of the polygon by (translationX,translationY) value
-     * @param polygon
-     * @param x
-     * @param y
-     * @param translationX
-     * @param translationY
-     */
-    public void pointTranslation(ConvexPolygon polygon,int maxX,int maxY,int x,int y,double translationX, double translationY) {	
-		double valX = polygon.getPoints().get(x);
-		double valY = polygon.getPoints().get(y);
-		
-		if(canTranslatePoint(polygon,maxX,maxY,x,y,translationX,translationY)) {
-	    	valX+=translationX;
-	    	valY+=translationY;
-	    	polygon.getPoints().set(x, valX);
-	    	polygon.getPoints().set(y, valY);
-		}
-    }
-    
-    /**
-     * translate the whole polygon by a random value
-     * @param polygon
-     */
-    public void polygonTranslation(ConvexPolygon polygon,int maxX,int maxY,double translationX, double translationY) {
-		if(canTranslatePolygon(polygon,maxX,maxY,translationX,translationY)) {
-			for(int i=0; i<polygon.getPoints().size()-1;i++) {
-	    		pointTranslation(polygon,maxX,maxY,i,i+1,translationX,translationY);  		
-	    	}		
-		}
-    }
-    
-    /**
-     * The polygon can have one of its vertex removed, or a new one added or a translation of only one of its vertex
-     * @param polygon
-     */
-    public void shapeMutation(ConvexPolygon polygon) {
-    	Random rand = new Random();
-    	Color[][] target = GeneticAlgorithm.target;
-		int maxX = target.length;
-		int maxY = target[0].length;
-    	double translationX;
-    	double translationY;
-    	if(rand.nextDouble() <= 0.3) {
-			int x,y;
-			do {
-				x = rand.nextInt(polygon.getPoints().size());
-			}while(x%2 != 0);
-			y = x+1;
-			do {
-				translationX = maxX * rand.nextDouble();
-				translationY = maxY * rand.nextDouble();	
-				if(rand.nextBoolean() == true) {
-					translationX*= -1;
-				}
-				if(rand.nextBoolean() == true) {
-					translationY*= -1;
-				}
-	    	}while(!canTranslatePoint(polygon,maxX,maxY,x,y,translationX,translationY));
-	    	pointTranslation(polygon,maxX,maxY,x,y,translationX,translationY);
-    	}else {
+        	 * Vertex mutation
+        	 */
+    		int x,y;
     		do {
-				translationX = maxX * rand.nextDouble();
-				translationY = maxY * rand.nextDouble();	
-				if(rand.nextBoolean() == true) {
-					translationX*= -1;
-				}
-				if(rand.nextBoolean() == true) {
-					translationY*= -1;
-				}
-	    	}while(!canTranslatePolygon(polygon,maxX,maxY,translationX,translationY));
-    		polygonTranslation(polygon,maxX,maxY,translationX,translationY);
+    			x = gen.nextInt(polygon.getPoints().size());
+    		}while(x%2 != 0);
+    		y = x+1;
+    		if(gen.nextDouble() <= 0.5) {
+    			double maxX = GeneticAlgorithm.target.length;
+    			changeVertex(polygon,maxX,x,delta);
+    		}else {
+    			double maxY = GeneticAlgorithm.target[0].length;
+    			changeVertex(polygon,maxY,y,delta);    			
+    		}
     	}
-    	//removeVertex(polygon);
-    	//addVertex(polygon);
+    	polygon.commitChanges();
     }
     
     /**
-     * There is one chance out of two to either add a new random polygon or to remove the
-     * given polygon
-     * @param polygon
+     * Changes a parameter (R,G,B,Opacity,X,Y) of a random polygon by a random value
      */
-    public void addRemoveMutation(ConvexPolygon polygon) {
-    	Random rand = new Random();
-    	int random = rand.nextInt(2);
-    	if(random == 1) {
-    		/*
-    		 * Removing the polygon
-    		 */
-    		if(genome.size() > 1) {
-    			genome.remove(polygon);
-    		}
+    public void mediumMutation() {
+    	Random gen = new Random();
+    	int polygonID = gen.nextInt(genome.size());
+    	ConvexPolygon polygon = genome.get(polygonID);
+    	if(gen.nextDouble() <= 0.333) {
+        	/*
+        	 * Color mutation
+        	 */
+        	int color = gen.nextInt(3);
+        	int newVal = gen.nextInt(256);
+        	polygon.colors[color] = newVal;
+    	}else if(gen.nextDouble() > 0.333 && gen.nextDouble() <= 0.666) {
+        	/*
+        	 * Opacity mutation
+        	 */
+        	double newVal = gen.nextDouble();
+        	polygon.opacity = newVal;
     	}else {
     		/*
-    		 * Adding a new polygon
-    		 */
-    		if(genome.size()<50) {
-    			int randomEdges = 3 + rand.nextInt(ConvexPolygon.maxEdges);
-    			genome.add(new ConvexPolygon(ConvexPolygon.maxEdges));
+        	 * Vertex mutation
+        	 */
+    		int x,y;
+    		do {
+    			x = gen.nextInt(polygon.getPoints().size());
+    		}while(x%2 != 0);
+    		y = x+1;
+    		if(gen.nextDouble() <= 0.5) {
+    			double maxX = GeneticAlgorithm.target.length;
+    			double newX = gen.nextDouble() * maxX;
+    			polygon.getPoints().set(x, newX);
+    		}else {
+    			double maxY = GeneticAlgorithm.target[0].length;
+    			double newY = gen.nextDouble() * maxY;
+    			polygon.getPoints().set(y, newY);    			
     		}
-    	}
+    	} 
+    	polygon.commitChanges();
     }
     
     /**
-     * Add a new point
-     * @param polygon
+     * Changes the a color(R,G or B), opacity and one vertex to a random value
      */
-    public void addVertexMutation(ConvexPolygon polygon) {
+    public void hardMutation() {
+    	Random gen = new Random();
+    	int polygonID = gen.nextInt(genome.size());
+    	ConvexPolygon polygon = genome.get(polygonID);
     	
-    }
-
-    /**
-     * If this function is called the Individual will undergo a random mutation
-     */    
-    public void mutation() {	
-    	
-    	if(genome.size()>0) {
-	    	Random rand = new Random();
-	    	double mutationChance = rand.nextDouble();
-	        
-	        /*
-	         * We randomly choose the gene that will mutate
-	         */
-	        int randomPolygon = rand.nextInt(genome.size());
-	        ConvexPolygon chosen = genome.get(randomPolygon);
-	        
-	        if(mutationChance <= 0.3) {
-	        	polygonColorMutation(chosen); 
-	        }else if(mutationChance > 0.3 && mutationChance <= 0.6) {
-	        	shapeMutation(chosen); 		
-	        }else if(mutationChance > 0.6 && mutationChance <= 0.9){
-	        	addRemoveMutation(chosen);
-	        }else{
-	    		genomeColorMutation(); 	
-	        }
+    	if(gen.nextDouble() <= 0.5) {
+	       	/*
+	       	 * Color and Opacity mutation
+	       	 */
+	       	int color = gen.nextInt(3);
+	       	int newVal = gen.nextInt(256);
+	       	double newOpacity = gen.nextDouble();
+	       	polygon.colors[color] = newVal;
+	       	polygon.opacity = newOpacity;
+    	}else {
+	    	/*
+	       	 * Vertex mutation
+	       	 */
+	   		int x,y;
+	    	do {
+	    		x = gen.nextInt(polygon.getPoints().size());
+	   		}while(x%2 != 0);
+	    	y = x+1;
+			double maxX = GeneticAlgorithm.target.length;
+			double newX = gen.nextDouble() * maxX;
+			polygon.getPoints().set(x, newX);
+			double maxY = GeneticAlgorithm.target[0].length;
+			double newY = gen.nextDouble() * maxY;
+			polygon.getPoints().set(y, newY);    	
     	}
+    	polygon.commitChanges();	
     }
     
     public void run() {
@@ -316,12 +316,30 @@ public class Individual{
         	
         	
             Individual copy = new Individual(bestIndividual.getGenome());
-            copy.mutation();
+            double copyFitness = copy.getFitness();
+            if(copyFitness > 15000) {
+            	copy.hardMutation();
+            }else if(copyFitness > 5000) {
+            	copy.mediumMutation(); 
+            }else if(copyFitness > 4000){
+            	copy.softMutation(0.5);
+            }else if(copyFitness > 3000){
+            	copy.softMutation(0.25);
+            }else if(copyFitness > 2000){
+            	copy.softMutation(0.125);
+            }else if(copyFitness > 1000){
+            	copy.softMutation(0.0625);
+            }else if(copyFitness > 500){
+            	copy.softMutation(0.03125);
+            }else {
+            	copy.softMutation(0.15625);
+            }
             copy.evaluate();
+            
             if(copy.getFitness() < bestIndividual.getFitness()) {
             	bestIndividual = copy;
                 System.out.println(getName()+" fitness =  " + bestIndividual.getFitness());
-            	Test.createResult(bestIndividual, GeneticAlgorithm.target.length, GeneticAlgorithm.target[0].length,getName()+"result");
+                Test.createResult(bestIndividual, GeneticAlgorithm.target.length, GeneticAlgorithm.target[0].length,getName()+"bestSoFar");
             }
         	
         }
