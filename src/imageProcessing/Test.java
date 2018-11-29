@@ -20,6 +20,9 @@ import javafx.stage.Stage;
 
 public class Test extends Application{
 	
+	public static Stage stage;
+	public static String imgName;
+	
 	public static void main(String[] args){
 		launch(args);
 	}
@@ -41,11 +44,10 @@ public class Test extends Application{
 		return image;	
 	}
 	
-	public static void showImage(Stage myStage,Group image,int maxX,int maxY) {
+	public static void showImage(Stage myStage,Scene scene,Group image,int maxX,int maxY) {
 		/*
 		 * affichage de l'image dans l'interface graphique
 		 */
-		Scene scene = new Scene(image,maxX, maxY);
 		myStage.setScene(scene);
 		myStage.show();
 	}
@@ -81,20 +83,20 @@ public class Test extends Application{
 	}
 	
 	public void start(Stage myStage){
-		String name = "monaLisa-200.jpg";
-		Color[][] target = createColorTab("generatedImages/"+name);
+		stage = myStage;
+		imgName = "monaLisa-200";
+		Color[][] target = createColorTab("generatedImages/"+imgName+".jpg");
 		int maxX = target.length;
 		int maxY = target[0].length;
 
 		GeneticAlgorithm GA = new GeneticAlgorithm(
 				100000000, // maxGenerationNumber
 				10, //acceptableFitnessThreshold
-				target // image cible
+				target // image cible				
 				);		
-		
+
 		Individual bestIndividual = GA.run();	
-		Group image = createResult(bestIndividual,maxX,maxY,name+"-finalResult");
-		showImage(myStage,image,maxX,maxY);
+		createResult(bestIndividual,maxX,maxY,imgName+"-finalResult");
 		
 	}
 

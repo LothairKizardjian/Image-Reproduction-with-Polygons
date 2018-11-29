@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import javafx.scene.Group;
+import javafx.scene.Scene;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
@@ -91,7 +92,7 @@ public class Individual{
 			    + Math.pow(c.getRed()-target[i][j].getRed(),2)
 			    + Math.pow(c.getGreen()-target[i][j].getGreen(),2);
 		    }
-		}		
+		}
 		fitness = res;
 		return res;
     }
@@ -192,20 +193,62 @@ public class Individual{
     }
     
     /**
+     * @return true if we can add a new polygon to the genome
+     */
+    public boolean canAddPolygon() {
+    	return this.getGenome().size()<50;
+    }
+    
+    /**
+     * Add a random new polygon to the genome
+     */
+    public void addNewRandomPolygon(){
+    	Random gen = new Random();
+    	int vertexNumber = ConvexPolygon.maxEdges;
+    	int formatId = gen.nextInt(3);
+    	String format;
+    	if(formatId == 0) {
+    		format = "color";
+    	}else if(formatId ==1) {
+    		format = "white";
+    	}else {
+    		format = "black";
+    	}
+    	ConvexPolygon newPolygon = new ConvexPolygon(vertexNumber,format);
+    	this.getGenome().add(newPolygon);
+    }
+    
+    /**
+     * @return if we can remove a polygon from the genome
+     */
+    public boolean canRemovePolygon() {
+    	return this.getGenome().size()>0;
+    }
+    
+    /**
+     * Removes the given polygon from the genome
+     * @param polygon
+     */
+    public void removePolygon(ConvexPolygon polygon) {
+    	this.getGenome().remove(polygon);
+    }
+    
+    /**
      * Changes a parameter (R,G,B,Opacity,X,Y) of a random polygon by a small delta
      */
     public void softMutation(double d) {    
     	Random gen = new Random();
     	double delta = gen.nextDouble() * d;
     	int polygonID = gen.nextInt(genome.size());
+    	double mutationChoice = gen.nextDouble();
     	ConvexPolygon polygon = genome.get(polygonID);
-    	if(gen.nextDouble() < 0.3) {
+    	if(mutationChoice < 0.3) {
         	/*
         	 * Color mutation
         	 */
         	int color = gen.nextInt(3);
         	changeColor(polygon,color,delta);
-    	}else if(gen.nextDouble() > 0.3 && gen.nextDouble() <= 0.6) {
+    	}else if(mutationChoice > 0.3 && mutationChoice <= 0.6) {
         	/*
         	 * Opacity mutation
         	 */
@@ -236,21 +279,22 @@ public class Individual{
     public void mediumMutation() {
     	Random gen = new Random();
     	int polygonID = gen.nextInt(genome.size());
+    	double mutationChoice = gen.nextDouble();
     	ConvexPolygon polygon = genome.get(polygonID);
-    	if(gen.nextDouble() <= 0.333) {
+    	if(mutationChoice <= 0.25) {
         	/*
         	 * Color mutation
         	 */
         	int color = gen.nextInt(3);
         	int newVal = gen.nextInt(256);
         	polygon.colors[color] = newVal;
-    	}else if(gen.nextDouble() > 0.333 && gen.nextDouble() <= 0.666) {
+    	}else if(mutationChoice > 0.25 && mutationChoice <= 0.50) {
         	/*
         	 * Opacity mutation
         	 */
         	double newVal = gen.nextDouble();
         	polygon.opacity = newVal;
-    	}else {
+    	}else if(mutationChoice >0.50 && mutationChoice <= 0.75){
     		/*
         	 * Vertex mutation
         	 */
@@ -268,7 +312,20 @@ public class Individual{
     			double newY = gen.nextDouble() * maxY;
     			polygon.getPoints().set(y, newY);    			
     		}
-    	} 
+    	}else {
+    		/*
+    		 * Adding or removing a polygon
+    		 */
+    		if(gen.nextBoolean()) {
+        		if(canAddPolygon()) {
+        			addNewRandomPolygon();
+        		}    			
+    		}else {
+    			if(canRemovePolygon()) {
+    				removePolygon(polygon);
+    			}
+    		}
+    	}
     	polygon.commitChanges();
     }
     
@@ -309,18 +366,25 @@ public class Individual{
     }
     
     public void run() {
+    	int maxX = GeneticAlgorithm.target.length;
+    	int maxY = GeneticAlgorithm.target[0].length;
     	Individual bestIndividual = this;
-		Test.createResult(bestIndividual, GeneticAlgorithm.target.length, GeneticAlgorithm.target[0].length,getName()+"startingImage");
+    	Test.createResult(bestIndividual,maxX,maxY,getName()+Test.imgName+"_startingImage");
 		// main loop
-    	double lastFitness = 0;
+    	double fitness = 100 * (1 - (bestIndividual.getFitness()/ (3*maxX*maxY)));
+    	double lastFitness = this.getFitness();
+        System.out.println(getName()+" fitness =  " + fitness +"%");
     	int mutationMethod = 1;
         for(int i=1; bestIndividual.getFitness() > GeneticAlgorithm.acceptableFitnessThreshold; i++) {
         	
-        	
             Individual copy = new Individual(bestIndividual.getGenome());
-            if(i%1000 == 0) {     
-                System.out.println(getName()+" fitness =  " + bestIndividual.getFitness());
-                System.out.println("last fitnes - Best fitness ="+(lastFitness-bestIndividual.getFitness()));
+            if(i%500 == 0) {
+            	Test.createResult(bestIndividual,maxX,maxY,Test.imgName+"_currentBest");
+            }
+            if(i%2000 == 0) {
+            	fitness = 100 * (1 - (bestIndividual.getFitness()/ (3*maxX*maxY)));
+                System.out.println(getName()+" fitness =  " + fitness +"%");
+                System.out.println("last fitness - Best fitness ="+(lastFitness-bestIndividual.getFitness()));
             	if(lastFitness-bestIndividual.getFitness()< 100) {
             		mutationMethod = 2;
             	}else {
@@ -337,7 +401,6 @@ public class Individual{
             
             if(copy.getFitness() < bestIndividual.getFitness()) {
             	bestIndividual = copy;
-                Test.createResult(bestIndividual, GeneticAlgorithm.target.length, GeneticAlgorithm.target[0].length,getName()+"bestSoFar");
             }
         	
         }
