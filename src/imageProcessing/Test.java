@@ -91,7 +91,7 @@ public class Test extends Application{
 
 		GeneticAlgorithm GA = new GeneticAlgorithm(
 				100000000, // maxGenerationNumber
-				10, //acceptableFitnessThreshold
+				99.99999999999999, //acceptableFitnessThreshold
 				target // image cible				
 				);		
 
