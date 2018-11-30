@@ -190,6 +190,7 @@ public class Individual{
     			double maxY = GeneticAlgorithm.target[0].length;
     			polygon.changeVertex(maxY,y,delta);    			
     		}
+    		polygon.convexify();
     	}
     	polygon.commitChanges();
     }
@@ -226,7 +227,7 @@ public class Individual{
     			x = gen.nextInt(polygon.getPoints().size());
     		}while(x%2 != 0);
     		y = x+1;
-    		if(vertexMutation <= 0.5) {
+    		if(vertexMutation <= 0.25) {
     			/*
     			 * Setting a x coordinate to a new random value
     			 */
@@ -234,16 +235,20 @@ public class Individual{
     			double newX;
     			newX = (double) gen.nextInt(maxX);    			
     			polygon.getPoints().set(x, newX);
-    		}else {
+    		}else if(vertexMutation <= 0.5) {
     			/*
     			 * Setting an y coordinate to a new random value
     			 */
     			int maxY = GeneticAlgorithm.target[0].length;
     			double newY;
     			newY = (double) gen.nextInt(maxY);
-    			polygon.getPoints().set(y, newY); 
+    			polygon.getPoints().set(y, newY); 	
+    		}else if(vertexMutation <= 0.75) {    			
+    			polygon.addRandomVertex();
+    		}else {
+    			polygon.removeRandomVertex();
     		}
-    		//polygon.convexify();
+    		polygon.convexify();
     	}else if(mutationChoice <= 0.80){
     		swapTwoRandomPolygons();
     	}else {
@@ -378,21 +383,21 @@ public class Individual{
         
         
         for(int i=1; fitness < GeneticAlgorithm.acceptableFitnessThreshold; i++) {
-            if(i%10 == 0) {
-            	Test.createResult(bestIndividual,maxX,maxY,Test.imgName+"_currentBest");
-            }
-            if(i%1000 == 0) {
-            	Instant currentTime = Instant.now();
-            	Duration timeElapsed = Duration.between(startTime, currentTime);
-            	System.out.println("time elpased since start : "+timeElapsed.toMinutes()+" minutes");
-            	/*
+            if(i%500 == 0) {
             	if(lastFitness - bestIndividual.getFitness() < 100) {
             		if(mutationMethod == 1) {
             			mutationMethod = 2;
             		}else{
             			mutationMethod = 1;
             		}
-            	}*/
+            	}
+            	
+            }
+            if(i%1000 == 0) {
+            	Instant currentTime = Instant.now();
+            	Duration timeElapsed = Duration.between(startTime, currentTime);
+            	System.out.println("time elpased since start : "+timeElapsed.toMinutes()+" minutes");
+            	Test.createResult(bestIndividual,maxX,maxY,Test.imgName+"_currentBest");
             }
         	
             Individual[] copies = new Individual[3];
@@ -407,7 +412,7 @@ public class Individual{
             	if(mutationMethod == 1) {
             		copies[j].softMutation(0.1);
             	}else if(mutationMethod == 2) {
-            		copies[j].mediumMutation2();
+            		copies[j].mediumMutation();
             	}else {
             		copies[j].hardMutation();
             	}

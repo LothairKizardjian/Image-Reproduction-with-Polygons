@@ -22,7 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-package imageProcessing;
+package imageProcessing.GrahamScan;
 import java.awt.Point;
 import java.util.*;
 
@@ -42,7 +42,7 @@ public final class GrahamScan {
      * @param points the list of points.
      * @return       true iff all points in <code>points</code> are collinear.
      */
-    protected static boolean areAllCollinear(List<Point> points) {
+    public static boolean areAllCollinear(List<Point> points) {
 
         if(points.size() < 2) {
             return true;

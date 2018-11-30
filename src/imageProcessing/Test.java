@@ -84,10 +84,10 @@ public class Test extends Application{
 	
 	public void start(Stage myStage){
 		stage = myStage;
-		imgName = "monaLisa-200";
+		imgName = "earth";
 		Color[][] target = createColorTab("generatedImages/"+imgName+".jpg");
 		int maxX = target.length;
-		int maxY = target[0].length;
+		int maxY = target[0].length;		
 
 		GeneticAlgorithm GA = new GeneticAlgorithm(
 				100000000, // maxGenerationNumber

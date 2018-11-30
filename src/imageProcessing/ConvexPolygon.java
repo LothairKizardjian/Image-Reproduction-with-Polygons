@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+
+import imageProcessing.GrahamScan.GrahamScan;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 
@@ -14,7 +16,7 @@ import javafx.scene.shape.Polygon;
 
 public class ConvexPolygon extends Polygon {
 		
-		static final int maxNumPoints=10;
+		static final int maxNumPoints=7;
 		static Random gen = new Random();
 		static int max_X,max_Y;
 		int colors[] = new int[3];
