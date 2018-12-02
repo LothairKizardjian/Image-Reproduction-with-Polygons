@@ -4,16 +4,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.imageio.ImageIO;
 
+import imageProcessing.Clustering.Clustering;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.image.PixelReader;
+import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -69,7 +67,7 @@ public class Test extends Application{
         			int b = (argb)&0xFF;
         			int g = (argb>>8)&0xFF;
         			int r = (argb>>16)&0xFF;
-        			int a = (argb>>24)&0xFF;
+        			//int a = (argb>>24)&0xFF;
         			target[i][j] = Color.rgb(r,g,b);
         		}
         	}
@@ -84,20 +82,33 @@ public class Test extends Application{
 	
 	public void start(Stage myStage){
 		stage = myStage;
-		imgName = "earth";
+		imgName = "monaLisa-100";
+		
 		Color[][] target = createColorTab("generatedImages/"+imgName+".jpg");
 		int maxX = target.length;
-		int maxY = target[0].length;		
-
+		int maxY = target[0].length;
+		
+		
+		
+		Image source = new Image(new File("generatedImages/"+imgName+".jpg").toURI().toString());
+		WritableImage target2 = new WritableImage((int)source.getWidth(),(int)source.getHeight());
+		Clustering clust = new Clustering(source,target2,imgName,50);
+		clust.generateCluster();
+		
 		GeneticAlgorithm GA = new GeneticAlgorithm(
+				clust.generateConvexPolygons(),
 				100000000, // maxGenerationNumber
-				99.99999999999999, //acceptableFitnessThreshold
+				1, //acceptableFitnessThreshold
 				target // image cible				
-				);		
-
-		Individual bestIndividual = GA.run();	
+				);	
+		
+		
+		
+		Individual bestIndividual = GA.run();
 		createResult(bestIndividual,maxX,maxY,imgName+"-finalResult");
 		
+		System.out.println("finished");
+		System.exit(0);
 	}
 
 }

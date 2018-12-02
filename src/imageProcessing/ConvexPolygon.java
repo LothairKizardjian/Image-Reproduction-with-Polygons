@@ -3,8 +3,6 @@ package imageProcessing;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -16,7 +14,7 @@ import javafx.scene.shape.Polygon;
 
 public class ConvexPolygon extends Polygon {
 		
-		static final int maxNumPoints=7;
+		static final int maxNumPoints=100;
 		static Random gen = new Random();
 		static int max_X,max_Y;
 		int colors[] = new int[3];
@@ -24,10 +22,14 @@ public class ConvexPolygon extends Polygon {
 		NumberFormat nf = new DecimalFormat("##.00");
 		
 		
-		// randomly generates a polygon
-		public ConvexPolygon(int numPoints,String format){
+		// randomly generates a convex polygon
+		public ConvexPolygon(int numPoints,boolean isConvex,String format){
 			super();
-			genRandomConvexPolygone(numPoints);
+			if(isConvex) {
+				genRandomConvexPolygone(numPoints);
+			}else {
+				genRandomPolygon(numPoints);
+			}
 			int r = 0;
 			int g = 0;
 			int b = 0;
@@ -51,6 +53,17 @@ public class ConvexPolygon extends Polygon {
 			this.setFill(Color.rgb(r, g, b));
 			this.opacity = 0.0;
 			this.setOpacity(opacity);
+		}
+		
+		public ConvexPolygon(List<java.awt.Point> pointList,Color c) {
+			for(int i=0; i<pointList.size(); i++) {
+					addPoint(pointList.get(i).getX(),pointList.get(i).getY());
+			}
+			this.opacity = 1;
+			colors[0] = (int) (c.getRed()*255);
+			colors[1] = (int) (c.getGreen()*255);
+			colors[2] = (int) (c.getBlue()*255);
+			commitChanges();
 		}
 		
 		public ConvexPolygon(){
@@ -92,28 +105,27 @@ public class ConvexPolygon extends Polygon {
 			}			
 			return points;
 		}
-		
-		/**
-		 * @param x
-		 * @param y
-		 * @return true if the (x,y) point is contained in the getPoints() list
-		 */
-		public boolean containsPoint(double x, double y) {
-			for(int i=0; i<getPoints().size()-1; i++) {
-				if(i%2 == 0) {
-					if(getPoints().get(i) == x && getPoints().get(i+1) == y) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
 			
 		public void addPoint(double x, double y){
 			getPoints().add(x);
 			getPoints().add(y);
 		}
 		
+		/**
+		 * generates an array of coordinate that represents a polygon
+		 * @param numPoints
+		 */
+		public void genRandomPolygon(int numPoints) {
+			int[][] points = generatePoints(numPoints);
+			for(int i=0;i<points[0].length;i++) {
+				addPoint(points[0][i],points[1][i]);
+			}
+		}
+		
+		/**
+		 * generates an array of coordinate that represents a convex polygon
+		 * @param numPoints
+		 */
 		public void genRandomConvexPolygone(int numPoints) {
 			int[][] points = generatePoints(numPoints);
 			List<java.awt.Point> convexHull = GrahamScan.getConvexHull(points[0],points[1]);
@@ -190,7 +202,7 @@ public class ConvexPolygon extends Polygon {
 	    		do {
 	    			x = gen.nextInt(GeneticAlgorithm.target.length);
 	    			y = gen.nextInt(GeneticAlgorithm.target[0].length); 	
-	    		}while(containsPoint(x, y));
+	    		}while(contains(x, y));
 	    		addPoint(x, y);
 	    	}
 	    }
@@ -243,7 +255,7 @@ public class ConvexPolygon extends Polygon {
 	    	double valV = getPoints().get(v);
 	    	double valW = v%2==0?getPoints().get(v+1):getPoints().get(v-1);
 	    	double deltaV = (int) (valV * delta);
-	    	if(!containsPoint(valV+delta,valW)) {
+	    	if(!contains(valV+delta,valW)) {
 		    	if(canChangeValue(max,v,deltaV)) {
 		    		getPoints().set(v, valV+deltaV);
 		    	}else {
@@ -355,8 +367,34 @@ public class ConvexPolygon extends Polygon {
 	    	}
 	    }
 	    
-	    
-	    
+	    /**
+	     * 
+	     * @return the area of this polygon
+	     * 
+	     * DOESNT WORK 
+	     
+	    public double getArea() {
+	    	int[] X = new int[getPoints().size()/2];
+	    	int[] Y = new int[getPoints().size()/2];	    	
+	    	int numPoints = getPoints().size()/2;
+	    	for(int i = 0; i<this.getPoints().size(); i++) {
+				if(i%2 == 0) {
+					X[i/2] = this.getPoints().get(i).intValue();
+				}else {
+					Y[i/2] = this.getPoints().get(i).intValue();
+				}
+			}
+	    		
+	    	double area = 0;         // Accumulates area in the loop
+	    	int j = numPoints-1;  // The last vertex is the 'previous' one to the first
+
+	    	  for (int i=0; i<numPoints; i++)
+	    	    { area = area +  (X[j]+X[i]) * (Y[j]-Y[i]); 
+	    	      j = i;  //j is previous vertex to i
+	    	    }
+	    	  return area/2;
+	    }
+	    */
 		
 		public class Point {
 			int x,y;
@@ -397,7 +435,7 @@ public class ConvexPolygon extends Polygon {
 			}
 			
 			public String toString(){
-				NumberFormat nf = new DecimalFormat("#.00");
+				//NumberFormat nf = new DecimalFormat("#.00");
 				return "(" + x + "," + y+")"; // + nf.format(Math.atan2(y, x))+")";
 			}
 		}

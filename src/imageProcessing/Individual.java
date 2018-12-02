@@ -6,7 +6,6 @@ import java.util.Random;
 import java.time.Duration;
 import java.time.Instant;
 import javafx.scene.Group;
-import javafx.scene.Scene;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
@@ -22,13 +21,11 @@ public class Individual{
     	this.genome = new ArrayList<ConvexPolygon>();
     }
     
-    public Individual(int n,String s,String format){  
+    public Individual(int n,String s,boolean isConvex,String format){  
     	name = s;
         genome=new ArrayList<ConvexPolygon>();
-        Random rand = new Random();
         for(int i=0; i<n; i++) {
-			int randomEdges = 3 + rand.nextInt(ConvexPolygon.maxNumPoints-3);
-        	genome.add(new ConvexPolygon(ConvexPolygon.maxNumPoints,format));
+        	genome.add(new ConvexPolygon(ConvexPolygon.maxNumPoints,isConvex,format));
         }
         evaluate();
     }
@@ -94,7 +91,7 @@ public class Individual{
 			    + Math.pow(c.getGreen()-target[i][j].getGreen(),2);
 		    }
 		}
-		fitness = res;
+		fitness = Math.sqrt(res);
 		return res;
     }
     
@@ -120,7 +117,7 @@ public class Individual{
     	}else {
     		format = "black";
     	}
-    	ConvexPolygon newPolygon = new ConvexPolygon(vertexNumber,format);
+    	ConvexPolygon newPolygon = new ConvexPolygon(vertexNumber,false,format);
     	this.getGenome().add(newPolygon);
     }
     
@@ -157,7 +154,7 @@ public class Individual{
     /**
      * Changes a parameter (R,G,B,Opacity,X,Y) of a random polygon by a small delta
      */
-    public void softMutation(double d) {    
+    public void softMutation(double d) {   
     	Random gen = new Random();
     	double delta = gen.nextDouble() * d;
     	int polygonID = gen.nextInt(genome.size());
@@ -180,6 +177,7 @@ public class Individual{
         	 */
     		int x,y;
     		do {
+    	    	System.out.println("SoftMutation");
     			x = gen.nextInt(polygon.getPoints().size());
     		}while(x%2 != 0);
     		y = x+1;
@@ -243,7 +241,7 @@ public class Individual{
     			double newY;
     			newY = (double) gen.nextInt(maxY);
     			polygon.getPoints().set(y, newY); 	
-    		}else if(vertexMutation <= 0.75) {    			
+    		}else if(vertexMutation <= 0.75) { 
     			polygon.addRandomVertex();
     		}else {
     			polygon.removeRandomVertex();
@@ -369,40 +367,28 @@ public class Individual{
     }
     
     public void run() {
+    	Instant startTime = Instant.now();
+        long duration = 0;
     	int mutationMethod = 2;
     	int maxX = GeneticAlgorithm.target.length;
     	int maxY = GeneticAlgorithm.target[0].length;
     	Individual bestIndividual = this;
-    	
+        System.out.println("Fitness =  " + bestIndividual.getFitness() +"");
+
 		// main loop
-    	
-    	Instant startTime = Instant.now();
-    	double fitness = 100 * (1 - (bestIndividual.getFitness()/ (3*maxX*maxY)));
-    	double lastFitness = this.getFitness();
-        System.out.println("Fitness =  " + fitness +"%");
         
-        
-        for(int i=1; fitness < GeneticAlgorithm.acceptableFitnessThreshold; i++) {
-            if(i%500 == 0) {
-            	if(lastFitness - bestIndividual.getFitness() < 100) {
-            		if(mutationMethod == 1) {
-            			mutationMethod = 2;
-            		}else{
-            			mutationMethod = 1;
-            		}
-            	}
-            	
-            }
-            if(i%1000 == 0) {
-            	Instant currentTime = Instant.now();
-            	Duration timeElapsed = Duration.between(startTime, currentTime);
-            	System.out.println("time elpased since start : "+timeElapsed.toMinutes()+" minutes");
-            	Test.createResult(bestIndividual,maxX,maxY,Test.imgName+"_currentBest");
+        while(bestIndividual.getFitness() > GeneticAlgorithm.acceptableFitnessThreshold) {
+            Instant currentTime = Instant.now();
+            Duration timeElapsed = Duration.between(startTime, currentTime);
+            if(timeElapsed.toMinutes() >= 1) {
+            	System.out.println("time elpased since start : "+ duration +" minutes");
+            	duration += timeElapsed.toMinutes();
+            	startTime = currentTime;
             }
         	
             Individual[] copies = new Individual[3];
             Individual best = bestIndividual;
-            int copieNumber = 1;
+            int copieNumber = 2;
             for(int j=0; j<copieNumber; j++) {
             	if(j==0) {
             		copies[j] = new Individual(bestIndividual.getGenome());
@@ -410,12 +396,12 @@ public class Individual{
             		copies[j] = new Individual(copies[j-1].getGenome());
             	}
             	if(mutationMethod == 1) {
-            		copies[j].softMutation(0.1);
+            		copies[j].softMutation(0.01);
             	}else if(mutationMethod == 2) {
             		copies[j].mediumMutation();
-            	}else {
+            	}/*else {
             		copies[j].hardMutation();
-            	}
+            	}*/
             	copies[j].evaluate();
             	if(best.getFitness() > copies[j].getFitness()) {
             		best = copies[j];
@@ -425,7 +411,8 @@ public class Individual{
             if(best != bestIndividual) {
             	bestIndividual = best;
             	fitness = 100 * (1 - (bestIndividual.getFitness()/ (3*maxX*maxY)));
-                System.out.println("Fitness =  " + fitness +"%");	
+                System.out.println("Fitness =  " + bestIndividual.getFitness() +"");
+            	Test.createResult(bestIndividual,maxX,maxY,Test.imgName+"_currentBest");	
             }        	
         }
     }
