@@ -148,7 +148,7 @@ public class Clustering {
 		int added = 0;
 		int maxX = (int) imageToReadFrom.getWidth();
 		int maxY = (int) imageToReadFrom.getHeight();
-		double acceptableDistanceBetweenPixel = 15.5;
+		double acceptableDistanceBetweenPixel = 15.2;
 		while(added < maxClusterNumber) {
 			int x = gen.nextInt(maxX);
 			int y = gen.nextInt(maxY);

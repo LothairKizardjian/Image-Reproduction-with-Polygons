@@ -188,7 +188,9 @@ public class Individual{
     			double maxY = GeneticAlgorithm.target[0].length;
     			polygon.changeVertex(maxY,y,delta);    			
     		}
+    		System.out.println("1");
     		polygon.convexify();
+    		System.out.println("2");
     	}
     	polygon.commitChanges();
     }
@@ -374,6 +376,7 @@ public class Individual{
     	int maxY = GeneticAlgorithm.target[0].length;
     	Individual bestIndividual = this;
         System.out.println("Fitness =  " + bestIndividual.getFitness() +"");
+        double lastFitness = this.getFitness();
 
 		// main loop
         
@@ -384,7 +387,18 @@ public class Individual{
             	System.out.println("time elpased since start : "+ duration +" minutes");
             	duration += timeElapsed.toMinutes();
             	startTime = currentTime;
+            	
+            	double deltaFitness = lastFitness - bestIndividual.getFitness();
+            	System.out.println("deltaFitness = "+deltaFitness);
+            	if(deltaFitness < 0.05) {
+            		if(mutationMethod == 1) {
+            			mutationMethod = 2;
+            		}else {
+            			mutationMethod = 1;
+            		}
+            	}
             }
+            
         	
             Individual[] copies = new Individual[3];
             Individual best = bestIndividual;
@@ -396,7 +410,7 @@ public class Individual{
             		copies[j] = new Individual(copies[j-1].getGenome());
             	}
             	if(mutationMethod == 1) {
-            		copies[j].softMutation(0.01);
+            		copies[j].softMutation(0.1);
             	}else if(mutationMethod == 2) {
             		copies[j].mediumMutation();
             	}/*else {
@@ -413,7 +427,7 @@ public class Individual{
             	fitness = 100 * (1 - (bestIndividual.getFitness()/ (3*maxX*maxY)));
                 System.out.println("Fitness =  " + bestIndividual.getFitness() +"");
             	Test.createResult(bestIndividual,maxX,maxY,Test.imgName+"_currentBest");	
-            }        	
+            }
         }
     }
 }
