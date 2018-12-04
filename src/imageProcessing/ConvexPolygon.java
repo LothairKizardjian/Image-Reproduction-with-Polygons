@@ -14,7 +14,7 @@ import javafx.scene.shape.Polygon;
 
 public class ConvexPolygon extends Polygon {
 		
-		static final int maxNumPoints=100;
+		static final int maxNumPoints=1000000000;
 		static Random gen = new Random();
 		static int max_X,max_Y;
 		int colors[] = new int[3];
@@ -56,6 +56,7 @@ public class ConvexPolygon extends Polygon {
 		}
 		
 		public ConvexPolygon(List<java.awt.Point> pointList,Color c) {
+			System.out.println("pointList :"+pointList);
 			for(int i=0; i<pointList.size(); i++) {
 					addPoint(pointList.get(i).getX(),pointList.get(i).getY());
 			}
@@ -371,7 +372,7 @@ public class ConvexPolygon extends Polygon {
 	     * 
 	     * @return the area of this polygon
 	     * 
-	     * DOESNT WORK 
+	     * DOESNT WORK OR DOES IT ?!
 	     
 	    public double getArea() {
 	    	int[] X = new int[getPoints().size()/2];

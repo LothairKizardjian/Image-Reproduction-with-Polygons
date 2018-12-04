@@ -177,7 +177,6 @@ public class Individual{
         	 */
     		int x,y;
     		do {
-    	    	System.out.println("SoftMutation");
     			x = gen.nextInt(polygon.getPoints().size());
     		}while(x%2 != 0);
     		y = x+1;
@@ -188,9 +187,7 @@ public class Individual{
     			double maxY = GeneticAlgorithm.target[0].length;
     			polygon.changeVertex(maxY,y,delta);    			
     		}
-    		System.out.println("1");
     		polygon.convexify();
-    		System.out.println("2");
     	}
     	polygon.commitChanges();
     }
@@ -377,7 +374,7 @@ public class Individual{
     	Individual bestIndividual = this;
         System.out.println("Fitness =  " + bestIndividual.getFitness() +"");
         double lastFitness = this.getFitness();
-
+        double deltaSoftMutation = 0.1;
 		// main loop
         
         while(bestIndividual.getFitness() > GeneticAlgorithm.acceptableFitnessThreshold) {
@@ -390,16 +387,13 @@ public class Individual{
             	
             	double deltaFitness = lastFitness - bestIndividual.getFitness();
             	System.out.println("deltaFitness = "+deltaFitness);
-            	if(deltaFitness < 0.05) {
-            		if(mutationMethod == 1) {
-            			mutationMethod = 2;
-            		}else {
-            			mutationMethod = 1;
-            		}
+            	if(deltaFitness < 0.5) {
+            		mutationMethod = 1;
+            		deltaSoftMutation /= 10;
             	}
+            	lastFitness = bestIndividual.getFitness();
             }
             
-        	
             Individual[] copies = new Individual[3];
             Individual best = bestIndividual;
             int copieNumber = 2;
@@ -410,7 +404,7 @@ public class Individual{
             		copies[j] = new Individual(copies[j-1].getGenome());
             	}
             	if(mutationMethod == 1) {
-            		copies[j].softMutation(0.1);
+            		copies[j].softMutation(deltaSoftMutation);
             	}else if(mutationMethod == 2) {
             		copies[j].mediumMutation();
             	}/*else {

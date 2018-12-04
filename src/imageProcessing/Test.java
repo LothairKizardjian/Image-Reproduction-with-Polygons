@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
-import imageProcessing.Clustering.Clustering;
+import imageProcessing.Clustering.Cluster;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Group;
@@ -82,7 +82,7 @@ public class Test extends Application{
 	
 	public void start(Stage myStage){
 		stage = myStage;
-		imgName = "monaLisa-100";
+		imgName = "batman";
 		
 		Color[][] target = createColorTab("generatedImages/"+imgName+".jpg");
 		int maxX = target.length;
@@ -92,8 +92,9 @@ public class Test extends Application{
 		
 		Image source = new Image(new File("generatedImages/"+imgName+".jpg").toURI().toString());
 		WritableImage target2 = new WritableImage((int)source.getWidth(),(int)source.getHeight());
-		Clustering clust = new Clustering(source,target2,imgName,50);
+		Cluster clust = new Cluster(source,target2,imgName,1000);
 		clust.generateCluster();
+		
 		
 		GeneticAlgorithm GA = new GeneticAlgorithm(
 				clust.generateConvexPolygons(),
@@ -106,6 +107,7 @@ public class Test extends Application{
 		
 		Individual bestIndividual = GA.run();
 		createResult(bestIndividual,maxX,maxY,imgName+"-finalResult");
+		
 		
 		System.out.println("finished");
 		System.exit(0);

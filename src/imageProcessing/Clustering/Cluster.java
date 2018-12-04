@@ -4,6 +4,7 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -14,24 +15,22 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 
-public class Clustering {
+public class Cluster {
 	
 	private ArrayList<PixelGroup> clusters;
 	private Image imageToReadFrom;
 	private WritableImage imageToWriteTo;
 	private int maxClusterNumber;
 	private String targetName;
-	public static PixelGroup targetImage;
-	public static ArrayList<Pixel> pixelsRemaining;
+	private PixelGroup targetImage;
 	
-	public Clustering(Image i1, WritableImage i2,String tname,int clusterNumber) {
+	public Cluster(Image i1, WritableImage i2,String tname,int clusterNumber) {
 		imageToReadFrom = i1;
 		imageToWriteTo  = i2;
 		maxClusterNumber = clusterNumber;
 		targetName = tname;
 		clusters = new ArrayList<PixelGroup>();
-		pixelsRemaining = new ArrayList<Pixel>();
-		targetImage = this.getAllPixels();
+		targetImage = getAllPixels();
 	}
 	
 	public boolean add(PixelGroup cluster) {
@@ -54,39 +53,18 @@ public class Clustering {
 	}
 	
 	/**
-	 * Merges both the PixelGroups into a new one. Deleting from clusters those
-	 * 2 groups and adding the new one. 
-	 * @param cluster1
-	 * @param cluster2
-	 */
-	public void merge(PixelGroup cluster1, PixelGroup cluster2) {
-		ArrayList<Pixel> newGroup = new ArrayList<Pixel>();
-		
-		for(Pixel p : cluster1.getGroup()) {
-			newGroup.add(new Pixel(p));
-		}
-		for(Pixel p : cluster2.getGroup()) {
-			newGroup.add(new Pixel(p));
-		}
-		
-		PixelGroup merged = new PixelGroup(newGroup);
-		
-		clusters.remove(cluster1);
-		clusters.remove(cluster2);
-		clusters.add(merged);
-	}
-	
-	/**
 	 * @return a new HashSet of Pixel containing all the pixels of the imageToReadFrom
 	 */
 	public PixelGroup getAllPixels(){
 		ArrayList<Pixel> allImagePixels = new ArrayList<Pixel>();
+		PixelGroup pg = new PixelGroup(this,"image");
 		for(int i=0; i<imageToReadFrom.getWidth(); i++) {
 			for(int j=0; j<imageToReadFrom.getHeight(); j++) {
-				allImagePixels.add(new Pixel(i,j,imageToReadFrom,imageToWriteTo));
+				allImagePixels.add(new Pixel(i,j,imageToReadFrom,imageToWriteTo,pg));
 			}
 		}
-		return new PixelGroup(allImagePixels);
+		pg.setGroup(allImagePixels);
+		return pg;
 	}
 	
 	public boolean containsPix(Pixel p) {
@@ -96,25 +74,6 @@ public class Clustering {
 			}
 		}
 		return false;
-	}
-	
-	/**
-	 * 
-	 * @param p
-	 * @return a new HashSet of pixels containing the neighbors of p that
-	 * doesn't belong to any of the PixelGroup of the cluster
-	 */
-	public ArrayList<Pixel> getFreeNeighbors(PixelGroup p,ArrayList<Pixel> pixelsRemaining){
-		ArrayList<Pixel> freeNeighbors = new ArrayList<Pixel>();
-		ArrayList<Pixel> pNeighbors = p.getAllNeighbors();
-		for(Pixel pix : pNeighbors) {
-			for(Pixel pixel : pixelsRemaining) {
-				if(pix.equals(pixel)) {
-					freeNeighbors.add(pix);
-				}
-			}
-		}
-		return freeNeighbors;
 	}
 	
 	/**
@@ -148,17 +107,18 @@ public class Clustering {
 		int added = 0;
 		int maxX = (int) imageToReadFrom.getWidth();
 		int maxY = (int) imageToReadFrom.getHeight();
-		double acceptableDistanceBetweenPixel = 15.2;
+		double acceptableDistanceBetweenPixel = maxX/maxClusterNumber*maxY/maxClusterNumber;
 		while(added < maxClusterNumber) {
 			int x = gen.nextInt(maxX);
 			int y = gen.nextInt(maxY);
-			Pixel p = targetImage.getPixel(x, y);
+			Pixel p = getTargetImage().getPixel(x, y);
 			if(canAddPixel(p,acceptableDistanceBetweenPixel)) {
-				ArrayList<Pixel> newPixelGroup = new ArrayList<Pixel>();
-				newPixelGroup.add(p);
-				PixelGroup newCluster = new PixelGroup(newPixelGroup);
+				PixelGroup newCluster = new PixelGroup(this,""+added);
+				newCluster.add(p);
+				newCluster.initNeighbors();
+				newCluster.setAverageColor();
+				newCluster.setAllColor(newCluster.getAverageColor());
 				clusters.add(newCluster);
-				pixelsRemaining.remove(p);
 				added++;
 			}
 		}
@@ -172,33 +132,37 @@ public class Clustering {
 	 * @param numPoints
 	 */
 	public void generateCluster() {
-		int pixelNumber = (int) (imageToReadFrom.getWidth() * imageToReadFrom.getHeight());
-		for(Pixel p : targetImage.getGroup()) {
-			pixelsRemaining.add(p);
-		}
+		//int pixelNumber = (int) (imageToReadFrom.getWidth() * imageToReadFrom.getHeight());
 		
-		/**
+		/*
 		 * Randomly generating numPoints PixelGroups of one Pixel
 		 */		
-		int pixelAdded = initializeCluster(maxClusterNumber);		
-		
-		/**
-		 * Addind all the pixels that aren't in a group
-		 */			
-		while(pixelAdded < pixelNumber) {
-			for(PixelGroup pg : clusters) {
-				ArrayList<Pixel> freeNeighbors = getFreeNeighbors(pg,pixelsRemaining);
-				for(Pixel pix : freeNeighbors) {
-					if(Math.abs(pix.getColorValue() - pg.getAverageColorValue()) < pg.delta) {
-						pg.add(pix);
-						pixelsRemaining.remove(pix);
-						pixelAdded++;
-						pg.setAverageColor();
-						pg.setAllColor(pg.getAverageColor());
-					}
-				}write();
+		initializeCluster(maxClusterNumber);
+		System.out.println("Initialisation finished");
+		/*
+		 * clustering
+		 */
+		//ExecutorService executorService = Executors.newFixedThreadPool(maxClusterNumber);
+		ArrayList<Thread> threads = new ArrayList<Thread>();
+		for(PixelGroup pg : clusters) {
+			try {
+			     threads.add(new Thread(pg));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		}	
+		}
+		for(Thread t : threads) {
+			t.start();
+		}
+		for(Thread t : threads) {
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		write();
 	}
 	
@@ -220,17 +184,30 @@ public class Clustering {
 	public ArrayList<ConvexPolygon> generateConvexPolygons(){
 		ArrayList<ConvexPolygon> cp = new ArrayList<ConvexPolygon>();
 		for(PixelGroup pg : clusters) {
-			int[] xlist = new int[pg.getGroup().size()];
-			int[] ylist = new int[pg.getGroup().size()];
-			int i = 0;
-			for(Pixel p : pg.getGroup()) {
-				xlist[i] = p.getX();
-				ylist[i] = p.getY();
-				i++;
+			if(pg.getGroup().size() > 3) {
+				int[] xlist = new int[pg.getGroup().size()];
+				int[] ylist = new int[pg.getGroup().size()];
+				int i = 0;
+				for(Pixel p : pg.getGroup()) {
+					xlist[i] = p.getX();
+					ylist[i] = p.getY();
+					i++;
+				}
+				List<java.awt.Point> pointList = GrahamScan.getConvexHull(xlist,ylist);
+				if(pointList != null) {
+					ConvexPolygon poly = new ConvexPolygon(GrahamScan.getConvexHull(xlist,ylist),pg.getAverageColor());
+					cp.add(poly);
+				}
 			}
-			ConvexPolygon poly = new ConvexPolygon(GrahamScan.getConvexHull(xlist,ylist),pg.getAverageColor());
-			cp.add(poly);
 		}
 		return cp;		
+	}
+
+	public PixelGroup getTargetImage() {
+		return targetImage;
+	}
+
+	public void setTargetImage(PixelGroup targetImage) {
+		this.targetImage = targetImage;
 	}
 }

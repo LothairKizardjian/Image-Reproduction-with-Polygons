@@ -1,6 +1,8 @@
 package imageProcessing.Clustering;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
@@ -20,16 +22,23 @@ public class Pixel{
 	private int argb;
 	private Color color;
 	private boolean free;
+	private double delta = 0.0;
+	private PixelGroup pixelGroup;
 	private Image imageToReadFrom;
 	private WritableImage imageToWriteTo;
+	private ArrayList<Pixel> freeNeighbors;
+	private ArrayList<Pixel> attachedNeighbors;
 	
-	public Pixel(int x, int y, Image i1, WritableImage i2) {
+	public Pixel(int x, int y, Image i1, WritableImage i2,PixelGroup pg) {
 		this.setX(x);
 		this.setY(y);
 		this.free = true;
 		this.imageToReadFrom = i1;
 		this.imageToWriteTo  = i2;
 		this.color = i1.getPixelReader().getColor(x,y);
+		this.setPixelGroup(pg);
+		this.freeNeighbors = new ArrayList<Pixel>();
+		this.attachedNeighbors = new ArrayList<Pixel>();
 	}
 	
 	public Pixel(Pixel p) {
@@ -39,6 +48,23 @@ public class Pixel{
 		this.free = p.free;
 		this.imageToReadFrom = p.imageToReadFrom;
 		this.imageToWriteTo  = p.imageToWriteTo;
+		this.setPixelGroup(p.getPixelGroup());
+		this.setFreeNeighbors(p.getFreeNeighbors());
+	}
+	
+	public void updateNeighbors() {
+		Iterator<Pixel> it = getFreeNeighbors().iterator();
+		while(it.hasNext()) {
+			Pixel p = it.next();
+			if(!p.isFree()) {
+				getAttachedNeighbors().add(p);
+				it.remove();
+			}
+		}
+	}
+	
+	public PixelGroup getPixelGroup() {
+		return pixelGroup;
 	}
 	
 	public Color getColor() {
@@ -51,6 +77,14 @@ public class Pixel{
 	
 	public void setFree(boolean b) {
 		this.free = b;
+	}
+	
+	public double getDelta() {
+		return delta;
+	}
+	
+	public void setDelta(double d) {
+		delta = d;
 	}
 	
 	public double getColorValue() {
@@ -83,78 +117,104 @@ public class Pixel{
 	 * 
 	 * @return a new HashSet of Pixel containing this pixel's neighbors
 	 */
-	public ArrayList<Pixel> getNeighbors(){
-		ArrayList<Pixel> neighborhood = new ArrayList<Pixel>();
+	public void initNeighbors(){
 		int maxX = (int) (imageToReadFrom.getWidth()-1);
 		int maxY = (int) (imageToReadFrom.getHeight()-1);
 		
 		for(int i=-1; i<=1; i++) {
 			for(int j=-1; j<=1; j++) {
 				if(i!=0 || j!=0) {
-					Pixel p = Clustering.targetImage.getPixel(getX()+i, getY()+j);
+					Pixel p;
+					
 					if(getX() == 0){
 						if(getY() == 0) {
 							if(i>=0 && j>=0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}
 							}
 						}else if(getY() == maxY){
 							if(i>=0 && j<=0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}
 							}
 						}else {							
 							if(i>= 0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}	
 							}
 						}
 					}else if(getX() == maxX){
 						if(getY() == 0) {
 							if(i<=0 && j>=0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}									
 							}							
 						}else if(getY() == maxY){
 							if(i<=0 && j<=0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}	
 							}
 						}else {
 							if(i<=0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}			
 							}
 						}
 					}else {
 						if(getY() == 0) {
 							if(j>=0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}								
 							}
 						}else if(getY() == maxY){
 							if(j<=0) {
+								p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 								if(p.isFree()) {
-									neighborhood.add(p);
+									freeNeighbors.add(p);
+								}else {
+									getAttachedNeighbors().add(p);
 								}			
 							}
 						}else {
+							p = getPixelGroup().getCluster().getTargetImage().getPixel(getX()+i, getY()+j);
 							if(p.isFree()) {
-								neighborhood.add(p);
+								freeNeighbors.add(p);
+							}else {
+								getAttachedNeighbors().add(p);
 							}	
 						}
 					}
 				}
 			}
 		}
-		return neighborhood;
 	}
 	
 	public double distanceBetween(Pixel p) {
@@ -183,5 +243,25 @@ public class Pixel{
 
 	public void setY(int y) {
 		this.y = y;
+	}
+
+	public void setPixelGroup(PixelGroup pixelGroup) {
+		this.pixelGroup = pixelGroup;
+	}
+
+	public ArrayList<Pixel> getFreeNeighbors() {
+		return freeNeighbors;
+	}
+
+	public void setFreeNeighbors(ArrayList<Pixel> freeNeighbors) {
+		this.freeNeighbors = freeNeighbors;
+	}
+
+	public ArrayList<Pixel> getAttachedNeighbors() {
+		return attachedNeighbors;
+	}
+
+	public void setAttachedNeighbors(ArrayList<Pixel> attachedNeighbors) {
+		this.attachedNeighbors = attachedNeighbors;
 	}
 }
