@@ -25,7 +25,7 @@ public class Individual{
     	name = s;
         genome=new ArrayList<ConvexPolygon>();
         for(int i=0; i<n; i++) {
-        	genome.add(new ConvexPolygon(ConvexPolygon.maxNumPoints,isConvex,format));
+        	genome.add(new ConvexPolygon(5,isConvex,format));
         }
         evaluate();
     }
@@ -368,13 +368,11 @@ public class Individual{
     public void run() {
     	Instant startTime = Instant.now();
         long duration = 0;
-    	int mutationMethod = 2;
     	int maxX = GeneticAlgorithm.target.length;
     	int maxY = GeneticAlgorithm.target[0].length;
     	Individual bestIndividual = this;
         System.out.println("Fitness =  " + bestIndividual.getFitness() +"");
         double lastFitness = this.getFitness();
-        double deltaSoftMutation = 0.1;
 		// main loop
         
         while(bestIndividual.getFitness() > GeneticAlgorithm.acceptableFitnessThreshold) {
@@ -384,14 +382,6 @@ public class Individual{
             	System.out.println("time elpased since start : "+ duration +" minutes");
             	duration += timeElapsed.toMinutes();
             	startTime = currentTime;
-            	
-            	double deltaFitness = lastFitness - bestIndividual.getFitness();
-            	System.out.println("deltaFitness = "+deltaFitness);
-            	if(deltaFitness < 0.5) {
-            		mutationMethod = 1;
-            		deltaSoftMutation /= 10;
-            	}
-            	lastFitness = bestIndividual.getFitness();
             }
             
             Individual[] copies = new Individual[3];
@@ -403,13 +393,7 @@ public class Individual{
             	}else {
             		copies[j] = new Individual(copies[j-1].getGenome());
             	}
-            	if(mutationMethod == 1) {
-            		copies[j].softMutation(deltaSoftMutation);
-            	}else if(mutationMethod == 2) {
-            		copies[j].mediumMutation();
-            	}/*else {
-            		copies[j].hardMutation();
-            	}*/
+            	copies[j].mediumMutation();
             	copies[j].evaluate();
             	if(best.getFitness() > copies[j].getFitness()) {
             		best = copies[j];

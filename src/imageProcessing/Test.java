@@ -82,7 +82,7 @@ public class Test extends Application{
 	
 	public void start(Stage myStage){
 		stage = myStage;
-		imgName = "batman";
+		imgName = "monaLisa-200";
 		
 		Color[][] target = createColorTab("generatedImages/"+imgName+".jpg");
 		int maxX = target.length;
@@ -92,7 +92,8 @@ public class Test extends Application{
 		
 		Image source = new Image(new File("generatedImages/"+imgName+".jpg").toURI().toString());
 		WritableImage target2 = new WritableImage((int)source.getWidth(),(int)source.getHeight());
-		Cluster clust = new Cluster(source,target2,imgName,1000);
+		
+		Cluster clust = new Cluster(source,target2,imgName,50);
 		clust.generateCluster();
 		
 		

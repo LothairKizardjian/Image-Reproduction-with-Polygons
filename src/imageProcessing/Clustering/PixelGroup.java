@@ -128,7 +128,6 @@ public class PixelGroup extends Task<Integer> {
 				}	
 			}
 			freeNeighbors = getFreeNeighbors();
-			cluster.write();
 		}
 		System.out.println(getName()+" -> finished");
 		return pixelAdded;
